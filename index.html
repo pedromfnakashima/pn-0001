@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitoramento de Despesas MS</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --surface-2:#f0efeb; --border:#e2e0da;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7873;
+  --grid:#e6e4de; --axis:#b9b7b0;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300;
+  --s1-soft:#9ec5f4;
+  --warn-bg:#fff4dc; --warn-bd:#eda100; --crit-bg:#fde8e7; --crit-bd:#e34948; --info-bg:#e6f0fc; --info-bd:#2a78d6;
+  --accent:#2a78d6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86;
+    --grid:#2c2b29; --axis:#55544f;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+    --s1-soft:#184f95;
+    --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5;
+    --accent:#3987e5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86;
+  --grid:#2c2b29; --axis:#55544f;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+  --s1-soft:#184f95;
+  --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5;
+  --accent:#3987e5;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+header.top{background:var(--surface);border-bottom:1px solid var(--border)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header.top .wrap{padding-top:36px;padding-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:30px;line-height:1.2;margin:6px 0 10px;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+h3{font-size:16px;margin:28px 0 8px}
+p{margin:0 0 12px}
+.lede{color:var(--text-2);max-width:780px}
+nav.toc{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px;scrollbar-width:none}
+nav.toc a{white-space:nowrap;color:var(--text-2);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px}
+nav.toc a:hover{background:var(--surface-2);color:var(--text)}
+.theme-btn{margin-left:auto;border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+section{padding:40px 0 8px;scroll-margin-top:48px}
+section > .wrap > .sub{color:var(--text-2);margin-bottom:20px;max-width:800px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.card h4{margin:0 0 2px;font-size:15px}
+.card .cap{color:var(--muted);font-size:13px;margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.kpi .v{font-size:26px;font-weight:650;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:13px;color:var(--text-2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}h1{font-size:24px}}
+.tbl{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td.wrap-txt,th.wrap-txt{white-space:normal;text-align:left;min-width:220px}
+thead th{font-weight:600;color:var(--text-2);background:var(--surface-2);position:sticky;top:0}
+tbody tr:hover{background:var(--surface-2)}
+table.inv td:first-child{white-space:normal;min-width:170px;word-break:break-word}
+tr.tot td{font-weight:650;border-top:2px solid var(--axis)}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.callout{border-left:4px solid var(--info-bd);background:var(--info-bg);border-radius:6px;padding:12px 16px;margin:12px 0}
+.callout.warn{border-color:var(--warn-bd);background:var(--warn-bg)}
+.callout.crit{border-color:var(--crit-bd);background:var(--crit-bg)}
+.callout b.tag{font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+ol.find,ul.find{padding-left:20px;margin:0}
+ol.find li,ul.find li{margin-bottom:10px}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid var(--border);color:var(--text-2);background:var(--surface-2);vertical-align:1px}
+.pill.crit{border-color:var(--crit-bd);color:var(--text)}
+.pill.warn{border-color:var(--warn-bd);color:var(--text)}
+details{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+details summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";display:inline-block;width:16px;color:var(--muted);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .inner{padding:0 18px 16px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--text-2);margin:4px 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--text-2);font-size:11px;font-family:inherit}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .bl{stroke:var(--axis);stroke-width:1}
+.chart .lbl{fill:var(--text);font-weight:600}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.15);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;opacity:0;transition:opacity .08s;z-index:5;min-width:150px;font-variant-numeric:tabular-nums}
+.tip .h{font-weight:650;margin-bottom:3px}
+.tip .r{display:flex;justify-content:space-between;gap:12px}
+.tip .r i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+footer{color:var(--muted);font-size:12.5px;padding:32px 0 48px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Análise dos arquivos · salvos/monitoramento · gerado em 13/10/2026</div>
+  <h1>Despesas do Governo de Mato Grosso do Sul — jan/2015 a ago/2025</h1>
+  <p class="lede">Análise de 18 arquivos: 7 PDFs (≈2.400 páginas), 6 apresentações PPTX e 5 planilhas XLSX (até 66 MB), organizados em três estudos: <b>credores privados</b>, <b>folha de pessoal por órgão</b> e <b>folha por categoria de servidor</b>. Os números foram recalculados a partir das planilhas de origem e conferidos com os rótulos dos gráficos dos PDFs. Todos os valores estão em R$ nominais, sem correção pela inflação.</p>
+</div></header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#resumo">Resumo</a>
+  <a href="#inventario">Inventário</a>
+  <a href="#credores">Credores</a>
+  <a href="#orgaos">Pessoal por órgão</a>
+  <a href="#categorias">Pessoal por categoria</a>
+  <a href="#desvio">Desvio da média</a>
+  <a href="#qualidade">Qualidade dos dados</a>
+  <a href="#recomendacoes">Recomendações</a>
+  <button class="theme-btn" id="themeBtn" type="button">Tema</button>
+</div></nav>
+
+<!-- ============ RESUMO ============ -->
+<section id="resumo"><div class="wrap">
+  <h2>Resumo executivo</h2>
+  <p class="sub">Os principais números do material e os problemas que mais afetam as conclusões.</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">Despesa total do Estado 2015–25</div><div class="v">R$ 160,2 bi</div><div class="d">soma das 11 abas anuais de credores</div></div>
+    <div class="kpi"><div class="l">404 credores privados</div><div class="v">R$ 26,6 bi</div><div class="d">16,6% do total · cresceram 4,15× de 2015 a 2024</div></div>
+    <div class="kpi"><div class="l">Folha líquida 2024</div><div class="v">R$ 7,45 bi</div><div class="d">+107% sobre 2015 (CAGR 8,4% a.a.)</div></div>
+    <div class="kpi"><div class="l">Peso dos inativos (AGEPREV)</div><div class="v">43,9%</div><div class="d">da folha em 2024 (38,4% em 2015; pico de 48% em 2020)</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Principais achados</h4>
+      <ol class="find">
+        <li><b>Mudança de patamar em 2021–2022.</b> O gasto com os 404 credores privados subiu 69% em 2022 (de R$ 2,53 bi para R$ 4,28 bi), puxado por Obras (+117%). A folha teve o maior salto da série no mesmo ano: +19,9% no total e +25% nos ativos, depois de 2019–2021 quase estagnados.</li>
+        <li><b>A previdência é o maior vetor da folha.</b> A AGEPREV respondeu por 46% do aumento absoluto da folha entre 2015 e 2024 (R$ 1,89 bi de R$ 3,86 bi), e o número de beneficiários cresceu 34,9%.</li>
+        <li><b>Mais remuneração, pouco mais efetivo.</b> De 2015 a 2024 a folha subiu +108%, os servidores +18,5% e a média mensal por servidor +76% (≈ +12% acima do IPCA, valor aproximado).</li>
+        <li><b>A concentração entre credores é moderada.</b> O top 10 recebeu 22,7% dos R$ 26,6 bi; o top 100, 71,5%. 104 dos 404 credores não receberam nada entre 2015 e 2019 e somam R$ 4,81 bi depois disso.</li>
+        <li><b>Obras atingiu o pico em 2023 e recuou.</b> Foram R$ 2,05 bi em 2023, R$ 1,49 bi em 2024 (−27%) e R$ 1,33 bi projetados para 2025. TI é a única categoria com projeção de alta em 2025 (+8,6%).</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4>Problemas que afetam as conclusões</h4>
+      <ol class="find">
+        <li><span class="pill crit">Erro</span> <b>A categoria ASSISTENTE está subdimensionada de 2015 a 2019.</b> A consolidação usou apenas a variante do nome com espaço no fim, e o PDF mostra R$ 0,1 mi em 2015 quando o valor correto é R$ 21,4 mi. Isso omite R$ 21–32 mi por ano.</li>
+        <li><span class="pill crit">Erro</span> <b>O total da tabela-resumo de credores está errado.</b> "R$ 26.711.495.753" somou também a coluna de ticket médio; o correto é R$ 26.378.221.282 (16,46%, e não 16,67%).</li>
+        <li><span class="pill warn">Método</span> <b>A planilha "Desvio da média" não mede outliers.</b> Ela compara ago/2025 com a média nominal da própria pessoa desde 2015, o que gera um viés positivo estrutural (mediana de +38%). Não traz cargo nem órgão.</li>
+        <li><span class="pill warn">Método</span> <b>As projeções de 2025 ignoram o 13º salário.</b> Historicamente, ×1,5 subestima o ano em 1,4% a 3,7% no total e em até 9,7% na SED. Daí a "queda" artificial da SED em 2025.</li>
+        <li><span class="pill warn">Rótulo</span> O que os PDFs chamam de "Salário Médio Anual" é, na verdade, uma <b>média mensal</b>, e a folha usada é a <b>líquida</b> ("REM. Após Deduções Obrigatórias"), e não o custo de pessoal da LRF.</li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ INVENTÁRIO ============ -->
+<section id="inventario"><div class="wrap">
+  <h2>Inventário dos arquivos</h2>
+  <p class="sub">O que é cada arquivo e como eles se relacionam. As planilhas são a fonte, os PPTX montam os gráficos e os PDFs são exportações dos PPTX. Quase todos os gráficos estão como imagem, sem dados embutidos.</p>
+  <div class="card"><div class="tbl"><table class="inv">
+    <thead><tr><th>Arquivo</th><th class="wrap-txt">O que é</th><th>Tamanho</th><th class="wrap-txt">Relação / observação</th></tr></thead>
+    <tbody>
+      <tr><td colspan="4" style="background:var(--surface-2);font-weight:600">Estudo 1 — Credores (raiz + <code>analise credores/</code>)</td></tr>
+      <tr><td>Gov unificada com totais.xlsx</td><td class="wrap-txt">Base de todos os gráficos de credores: 29 abas, dados anuais por credor (≈80,8 mil credores), seleção dos 404 privados, rankings e "Casos estranhos"</td><td>22 MB</td><td class="wrap-txt">Fonte primária. A aba "Gráficos" tem <code>#REF!</code> e a aba "Resultado" mistura linhas de total</td></tr>
+      <tr><td>Analise das despesas com credores privados.pdf</td><td class="wrap-txt">Versão completa: total do Estado, 5 categorias, tabela-resumo e 401 páginas (uma por credor)</td><td>414 p.</td><td class="wrap-txt">Exclui os 3 credores sem categoria</td></tr>
+      <tr><td>Analise das despesas de MS - Jan-2015 - Ago-2025.pdf (raiz)</td><td class="wrap-txt">Versão enxuta: ≈234 credores, quase todos com pagamentos em 2025</td><td>245 p.</td><td class="wrap-txt">Gerado de "para impressao Graficos por categoria.pptx" (245 slides). O critério de seleção não está documentado</td></tr>
+      <tr><td>para impressao.pdf</td><td class="wrap-txt">Praticamente idêntico ao PDF de 245 p., com 3 páginas-imagem no lugar da capa</td><td>247 p.</td><td class="wrap-txt">Versão de impressão (duplicata)</td></tr>
+      <tr><td>Gráficos por categoria de credor.pptx</td><td class="wrap-txt">Resumo de 14 slides, o único com o texto da <b>metodologia</b></td><td>14 slides</td><td class="wrap-txt">—</td></tr>
+      <tr><td>Graficos empresas com projeção 2025.pptx</td><td class="wrap-txt">Um gráfico por empresa (212), com projeção para 2025</td><td>219 slides</td><td class="wrap-txt">Corresponde à aba "Novos gráficos"</td></tr>
+      <tr><td>Empresas GOV.pptx</td><td class="wrap-txt">Versão mais antiga (18/08), sem projeção</td><td>212 slides</td><td class="wrap-txt">Substituída pelo deck "com projeção"</td></tr>
+      <tr><td colspan="4" style="background:var(--surface-2);font-weight:600">Estudo 2 — Pessoal por órgão (raiz + <code>analise secretarias/</code>)</td></tr>
+      <tr><td>Orgaos MS.xlsx</td><td class="wrap-txt">41 órgãos × 128 meses: total, contagem, remuneração média, ativos/inativos. Só valores colados, sem fórmulas</td><td>1 MB</td><td class="wrap-txt">Fonte primária. A aba "Categorias" é, na verdade, por órgão</td></tr>
+      <tr><td>Análise das Despesas com Pessoal no MS - jan 2015 - ago 2025.pdf (raiz)</td><td class="wrap-txt">Capa, 4 gráficos consolidados e 41 órgãos × 3 gráficos</td><td>128 p.</td><td class="wrap-txt">Versão final</td></tr>
+      <tr><td>Relatório de estudos da Folha de Pessoal - MS.pdf</td><td class="wrap-txt">Só os 41 órgãos × 3 gráficos</td><td>123 p.</td><td class="wrap-txt">Versão anterior (47 min antes)</td></tr>
+      <tr><td>analise folha pessoal/Relatório de estudos da Folha de Pessoal - MS.pptx</td><td class="wrap-txt">Origem do PDF de <b>128 p.</b>, apesar do nome</td><td>128 slides</td><td class="wrap-txt">Nomes de arquivo trocados</td></tr>
+      <tr><td colspan="4" style="background:var(--surface-2);font-weight:600">Estudo 3 — Pessoal por categoria (raiz + <code>analise folha pessoal/</code>)</td></tr>
+      <tr><td>Filtro Categorias.xlsx</td><td class="wrap-txt">Despesa anual por categoria (285 categorias)</td><td>108 KB</td><td class="wrap-txt">Fonte primária (despesa)</td></tr>
+      <tr><td>Contagem funcionarios por categoriia.xlsx</td><td class="wrap-txt">Número médio mensal de servidores por categoria</td><td>78 KB</td><td class="wrap-txt">Fonte primária (efetivo)</td></tr>
+      <tr><td>Consolidado - Desvio da media.xlsx</td><td class="wrap-txt">135.271 linhas (por nome) × 128 meses + média e "desvio" de ago/2025</td><td>66 MB</td><td class="wrap-txt">Base separada; não alimenta o PDF. Contém dados pessoais</td></tr>
+      <tr><td>PARTE 2 - ... (Categorias de Servidores).pdf (raiz)</td><td class="wrap-txt">Capa + 284 categorias × 3 gráficos</td><td>853 p.</td><td class="wrap-txt"><b>Idêntico</b> (mesmo md5) ao "PARTE 2 pdf" da subpasta</td></tr>
+      <tr><td>BACKUP - PARTE 2 ... .pptx</td><td class="wrap-txt">Origem do PDF de 853 p. (só imagens)</td><td>853 slides</td><td class="wrap-txt">—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Duplicatas exatas: os dois PDFs "PARTE 2" (mesmo md5). Duplicatas de conteúdo: o PDF de 245 p. e "para impressao.pdf"; o PDF de 123 p. é um subconjunto do de 128 p.</p></div>
+
+  <details><summary>Metodologia inferida pelos três estudos</summary><div class="inner">
+    <ul class="find">
+      <li><b>Fonte:</b> Portal da Transparência de MS em todos os estudos. Não se sabe se os dados de credores são empenho, liquidação ou pagamento.</li>
+      <li><b>Credores privados:</b> os ≈80 mil credores foram ordenados pelo total do período; excluíram-se os de natureza pública (vencimentos, inativos, previdência, secretarias, bancos, transferências) e mantiveram-se os que receberam pelo menos R$ 10 mi. O resultado são 404 credores, classificados manualmente em 5 categorias (401) mais 3 sem categoria.</li>
+      <li><b>Projeção 2025 de credores:</b> valor até agosto ÷ 233 dias × 364 (fator 1,5622). Os dados vão até ≈21/08/2025.</li>
+      <li><b>Projeção 2025 de pessoal:</b> jan–ago × 12/8 (fator 1,5) em todos os órgãos e categorias. A projeção total do gráfico consolidado (R$ 7,892 bi) difere da soma por órgão (R$ 7,871 bi), e o método do gráfico não é reproduzível; parece ser jan–ago/2025 + set–dez/2024.</li>
+      <li><b>Folha:</b> usa o campo "REM. Após Deduções Obrigatórias", ou seja, valor <i>líquido</i> de IR e contribuição previdenciária, sem encargos patronais.</li>
+      <li><b>Contagem de servidores:</b> média dos meses com dado (÷12, ou ÷8 em 2025). Pode contar vínculos em vez de pessoas.</li>
+      <li><b>"Salário médio anual":</b> no estudo por órgão, é a média simples das médias mensais; no estudo por categoria, despesa ÷ servidores ÷ 12. Nos dois casos o resultado é uma remuneração <i>mensal</i>.</li>
+    </ul>
+  </div></details>
+</div></section>
+
+<!-- ============ CREDORES ============ -->
+<section id="credores"><div class="wrap">
+  <h2>Estudo 1 — Credores do Estado</h2>
+  <p class="sub">Do total de R$ 160,2 bi pago a ≈80,8 mil credores, 78,96% vai para entes públicos, folha, previdência e bancos. Os 404 credores privados que receberam pelo menos R$ 10 mi somam R$ 26,6 bi (16,6%).</p>
+
+  <div class="card">
+    <h4>Gasto anual com os 404 credores privados, por categoria</h4>
+    <div class="cap">R$ milhões nominais · 2025 = projeção linear (jan–ago × 364/233)</div>
+    <div id="ch-cred-cat"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Participação dos privados no total geral</h4>
+      <div class="cap">% do total anual do Estado · 2025 = jan–ago</div>
+      <div id="ch-cred-share"></div>
+    </div>
+    <div class="card">
+      <h4>Total 2015–2025 por categoria</h4>
+      <div class="cap">R$ bilhões · nº de credores entre parênteses</div>
+      <div id="ch-cred-tot"></div>
+    </div>
+  </div>
+
+  <details><summary>Tabela — série anual: total geral × 404 privados</summary><div class="inner"><div class="tbl"><table>
+    <thead><tr><th>Ano</th><th>Total geral (R$)</th><th>Var. a.a.</th><th>404 privados (R$)</th><th>Var. a.a.</th><th>% privados</th></tr></thead>
+    <tbody>
+      <tr><td>2015</td><td>12.092.666.122,60</td><td>–</td><td>960.879.679,03</td><td>–</td><td>7,95%</td></tr>
+      <tr><td>2016</td><td>10.112.866.672,50</td><td>−16,4%</td><td>1.369.962.768,48</td><td>+42,6%</td><td>13,55%</td></tr>
+      <tr><td>2017</td><td>11.084.161.480,81</td><td>+9,6%</td><td>1.593.992.660,34</td><td>+16,4%</td><td>14,38%</td></tr>
+      <tr><td>2018</td><td>11.959.410.700,48</td><td>+7,9%</td><td>1.783.418.579,14</td><td>+11,9%</td><td>14,91%</td></tr>
+      <tr><td>2019</td><td>12.435.888.732,15</td><td>+4,0%</td><td>1.557.635.358,45</td><td>−12,7%</td><td>12,53%</td></tr>
+      <tr><td>2020</td><td>12.843.861.557,28</td><td>+3,3%</td><td>1.792.732.254,36</td><td>+15,1%</td><td>13,96%</td></tr>
+      <tr><td>2021</td><td>15.500.593.312,94</td><td>+20,7%</td><td>2.532.615.559,99</td><td>+41,3%</td><td>16,34%</td></tr>
+      <tr><td>2022</td><td>19.852.475.258,81</td><td>+28,1%</td><td>4.283.250.368,15</td><td>+69,1%</td><td>21,58%</td></tr>
+      <tr><td>2023</td><td>20.388.682.728,11</td><td>+2,7%</td><td>4.305.468.505,20</td><td>+0,5%</td><td>21,12%</td></tr>
+      <tr><td>2024</td><td>20.683.469.413,40</td><td>+1,4%</td><td>3.990.714.366,60</td><td>−7,3%</td><td>19,29%</td></tr>
+      <tr><td>2025 (jan–ago)</td><td>13.266.276.694,92</td><td>–</td><td>2.428.500.310,78</td><td>–</td><td>18,31%</td></tr>
+      <tr><td>2025 (projeção)</td><td>20.724.998.785,20</td><td>+0,2%</td><td>3.793.880.313,84</td><td>−4,9%</td><td>18,31%</td></tr>
+      <tr class="tot"><td>Total 2015–25</td><td>160.220.352.674,00</td><td></td><td>26.599.170.410,52</td><td></td><td>16,60%</td></tr>
+    </tbody></table></div>
+    <p class="note">De 2015 a 2024, o total geral cresceu 6,15% a.a. e os privados, 17,14% a.a. A cobertura de 2015–2016 é suspeita (ver <a href="#qualidade">Qualidade</a>); com base em 2017, os valores são 9,32% a.a. e 14,01% a.a.</p>
+  </div></details>
+
+  <details><summary>Tabela — totais por categoria (corrigida)</summary><div class="inner"><div class="tbl"><table>
+    <thead><tr><th>Categoria</th><th>Nº</th><th>Total 2015–25 (R$)</th><th>Ticket médio (R$)</th><th>% dos 404</th><th>% do total geral</th><th>2015→2024</th></tr></thead>
+    <tbody>
+      <tr><td>Obras Públicas</td><td>164</td><td>10.174.036.176,51</td><td>62.036.805,95</td><td>38,25%</td><td>6,35%</td><td>6,41×</td></tr>
+      <tr><td>Outras</td><td>120</td><td>7.791.287.607,94</td><td>64.927.396,73</td><td>29,29%</td><td>4,86%</td><td>4,52×</td></tr>
+      <tr><td>Tecnologia da Informação</td><td>47</td><td>4.211.342.710,84</td><td>89.603.036,40</td><td>15,83%</td><td>2,63%</td><td>2,61×</td></tr>
+      <tr><td>Saúde e Nutrição</td><td>44</td><td>2.853.074.298,48</td><td>64.842.597,69</td><td>10,73%</td><td>1,78%</td><td>2,39×</td></tr>
+      <tr><td>Comunicação e Eventos</td><td>26</td><td>1.348.480.488,33</td><td>51.864.634,17</td><td>5,07%</td><td>0,84%</td><td>4,13×</td></tr>
+      <tr><td>(sem categoria)</td><td>3</td><td>220.949.128,42</td><td>73.649.709,47</td><td>0,83%</td><td>0,14%</td><td>–</td></tr>
+      <tr class="tot"><td>Total 401 categorizados</td><td>401</td><td>26.378.221.282,10</td><td>65.781.100,45</td><td></td><td>16,46%</td><td></td></tr>
+      <tr class="tot"><td>Total 404</td><td>404</td><td>26.599.170.410,52</td><td>65.839.530,72</td><td>100%</td><td>16,60%</td><td></td></tr>
+    </tbody></table></div>
+    <div class="callout crit"><b class="tag">Erro no original</b>A tabela dos slides (p.8 do PDF de 414 p.) mostra "Total (401 empresas) R$ 26.711.495.753, 16,67%". A diferença de R$ 333.274.470,95 é exatamente a soma dos 5 tickets médios, que foram somados por engano.</div>
+  </div></details>
+
+  <div class="card">
+    <h4>Top 20 credores privados, 2015–2025</h4>
+    <div class="cap">R$ milhões · passe o mouse para ver 2015, 2024 e 2025 · cor = categoria</div>
+    <div class="legend" id="lg-top"></div>
+    <div id="ch-cred-top"></div>
+    <p class="note">Concentração entre os 404: top 5 = 13,1% · top 10 = 22,7% · top 20 = 35,5% · top 50 = 55,3% · top 100 = 71,5%. Unificando as 3 grafias do Instituto Acqua, o total chega a R$ 828,6 mi, o que o colocaria em <b>2º lugar</b>.</p>
+  </div>
+
+  <details><summary>Tabela — top 20 em 2023, 2024 e 2025 (jan–ago)</summary><div class="inner"><div class="tbl"><table>
+    <thead><tr><th>#</th><th>2023</th><th>R$ mi</th><th>2024</th><th>R$ mi</th><th>2025 (jan–ago)</th><th>R$ mi</th></tr></thead>
+    <tbody id="tb-rank"></tbody></table></div>
+    <p class="note">Credores dos 404 sem pagamento no ano: 82 em 2023, 90 em 2024 e 132 até ago/2025.</p>
+  </div></details>
+
+  <h3>Achados sobre credores</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>Surgem do zero</h4>
+      <p class="cap">104 dos 404 não receberam nada entre 2015 e 2019 e somam R$ 4,81 bi depois</p>
+      <div class="tbl"><table><thead><tr><th>Credor</th><th>1º ano</th><th>Total (R$ mi)</th></tr></thead><tbody>
+        <tr><td>Inst. Acqua-Ação, Cidadania…</td><td>2020</td><td>466,3</td></tr>
+        <tr><td>Construtora São Cristovão</td><td>2021</td><td>336,2</td></tr>
+        <tr><td>Instituto Acqua</td><td>2022</td><td>289,4</td></tr>
+        <tr><td>LCM Construção</td><td>2021</td><td>265,1</td></tr>
+        <tr><td>Construtora Luiz Costa</td><td>2021</td><td>167,7</td></tr>
+        <tr><td>XCMG Brasil (89% em 2022)</td><td>–</td><td>152,5</td></tr>
+        <tr><td>Nosde Engenharia</td><td>2022</td><td>142,1</td></tr>
+        <tr><td>S/A Paulista (84% em 2023; zero em 2025)</td><td>–</td><td>110,9</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <h4>Picos e interrupções</h4>
+      <ul class="find">
+        <li><b>36 credores</b> com mais de R$ 20 mi no período receberam mais de 50% do total em um único ano. Exemplos: FUNJECC (R$ 228 mi em 2018) e Construtora Perfil (100% em 2025, R$ 52,3 mi).</li>
+        <li><b>82 credores</b> zerados em 2024 e 2025, entre eles ICE Cartões (R$ 268 mi, nada desde 2024), Instituto Gerir (R$ 76 mi, só 2016–19) e Perkons (até 2019).</li>
+        <li>As maiores quedas de 2023 para 2024 foram todas em obras: Bandeirantes −R$ 90 mi, S/A Paulista −81, Caiapó −71, LCM −67, São Cristovão −53.</li>
+        <li><b>Energisa:</b> de R$ 9,3 mi (2021) para R$ 219,6 mi (2024), +R$ 210 mi, o maior crescimento absoluto.</li>
+        <li><b>Projeção 2025 vs 2024:</b> Avance 1,90×, LCM 1,82× e Instituto Acqua 1,55× em alta; São Cristovão 0,12×, Bandeirantes 0,34× e Energisa 0,51× em queda.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Aba "Casos estranhos"</h4>
+    <p class="cap">13 credores marcados pelo autor do estudo, alguns com links de notícias. A aba não traz explicação além dos links. Nomes de pessoas físicas omitidos aqui.</p>
+    <div class="tbl"><table><thead><tr><th>Credor</th><th>Total (R$)</th><th class="wrap-txt">O que chama atenção</th></tr></thead><tbody>
+      <tr><td>Ednelson Guerra Niz ME</td><td>135.456.934,61</td><td class="wrap-txt">Zero até 2017 e R$ 47,0 mi em 2022. Links: contratos de som e iluminação na pandemia</td></tr>
+      <tr><td>SDI Informática e Construções</td><td>65.922.997,28</td><td class="wrap-txt">De R$ 0,69 mi para R$ 10,3 mi por ano. Links: multa por fraude em licitações; Operação Nota Zero</td></tr>
+      <tr><td>Pessoa física A</td><td>27.600.000,00</td><td class="wrap-txt">Valor redondo, apenas em 2022</td></tr>
+      <tr><td>Rodrigo Borges de Jesus Ltda EPP</td><td>26.453.212,28</td><td class="wrap-txt">Pico de R$ 10,96 mi em 2022</td></tr>
+      <tr><td>Associação dos Artistas</td><td>23.757.461,51</td><td class="wrap-txt">Só 2024 (R$ 6,47 mi) e 2025 (R$ 17,29 mi)</td></tr>
+      <tr><td>Financial Administradora de Imóveis</td><td>23.039.951,87</td><td class="wrap-txt">Estável, de R$ 1,4 a 3,1 mi por ano</td></tr>
+      <tr><td>Aldevina Aparecida do Nascimento EPP</td><td>23.006.663,97</td><td class="wrap-txt">Só 2021–2024; pico de R$ 8,36 mi em 2022</td></tr>
+      <tr><td>J.N. Rodovias S.A.</td><td>22.188.750,48</td><td class="wrap-txt">Desde 2021; concessão de parques e da Gruta do Lago Azul</td></tr>
+      <tr><td>Nelson Cícero G. da Cruz ME</td><td>16.434.153,58</td><td class="wrap-txt">R$ 4,90 mi em 2024</td></tr>
+      <tr><td>Pessoa física B</td><td>13.226.002,43</td><td class="wrap-txt">Pessoa física classificada em Obras</td></tr>
+      <tr><td>Allan Antunes Ribeiro Eireli</td><td>12.928.328,11</td><td class="wrap-txt">Salto de R$ 0,5 mi para R$ 2,78 mi em 2022</td></tr>
+      <tr><td>Conselho Estadual de Trânsito</td><td>10.988.872,81</td><td class="wrap-txt">Órgão público na lista de privados</td></tr>
+      <tr><td>CGRHL/Ministério do Turismo</td><td>10.081.891,76</td><td class="wrap-txt">R$ 9,41 mi em 2021; ente público</td></tr>
+    </tbody></table></div>
+    <p class="note">Estar nesta lista é apenas um sinal para investigação e não indica irregularidade. Os links de notícias citados estão na própria planilha.</p>
+  </div>
+</div></section>
+
+<!-- ============ ÓRGÃOS ============ -->
+<section id="orgaos"><div class="wrap">
+  <h2>Estudo 2 — Folha de pessoal por órgão</h2>
+  <p class="sub">41 órgãos, de jan/2015 a ago/2025. O valor é a remuneração <b>líquida</b> de deduções obrigatórias. A folha dobrou em 9 anos; descontado o IPCA (valor aproximado), o crescimento real foi de ≈ +31%, ou ≈3,1% a.a.</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">Folha 2015</div><div class="v">R$ 3,60 bi</div><div class="d">73.978 registros (média)</div></div>
+    <div class="kpi"><div class="l">Folha 2024</div><div class="v">R$ 7,45 bi</div><div class="d">86.552 registros · +107,3%</div></div>
+    <div class="kpi"><div class="l">Projeção 2025 (×1,5)</div><div class="v">R$ 7,87 bi</div><div class="d">com ajuste de sazonalidade ≈ R$ 8,13 bi (+9,1%)</div></div>
+    <div class="kpi"><div class="l">Média líquida/registro/mês</div><div class="v">R$ 7.177</div><div class="d">2024 · era R$ 4.051 em 2015 (+77%)</div></div>
+  </div>
+
+  <div class="card">
+    <h4>Folha anual: ativos e inativos</h4>
+    <div class="cap">R$ milhões nominais · inativos = aposentados + pensão por morte (≈ AGEPREV) · 2025 = jan–ago × 1,5</div>
+    <div id="ch-folha"></div>
+    <p class="note">De 2015 a 2024: ativos +88,8%, aposentados +139,8%, pensões +120,3%. A razão inativos/ativos subiu de 0,62 (2015) para 0,92 (2020) e voltou a 0,78 (2024) após os reajustes de ativos de 2022–24.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Top 15 órgãos em 2024</h4>
+      <div class="cap">R$ milhões · passe o mouse para comparar com 2015</div>
+      <div id="ch-orgaos"></div>
+    </div>
+    <div class="card">
+      <h4>Crescimento jan–ago 2025 sobre jan–ago 2024</h4>
+      <div class="cap">Órgãos com folha acima de R$ 30 mi · comparação livre do viés da projeção</div>
+      <div id="ch-orgaos-yoy"></div>
+    </div>
+  </div>
+
+  <details><summary>Tabela — top 15 órgãos (2015, 2024, 2025 projetado)</summary><div class="inner"><div class="tbl"><table>
+    <thead><tr><th>Órgão</th><th>2015 (R$ mi)</th><th>2024 (R$ mi)</th><th>2025 proj. (R$ mi)</th><th>Var. 15→24</th><th>Part. 2015</th><th>Part. 2024</th><th>Servidores 2015</th><th>Servidores 2024</th></tr></thead>
+    <tbody>
+      <tr><td>AGEPREV</td><td>1.379,7</td><td>3.273,4</td><td>3.515,2</td><td>+137,3%</td><td>38,4%</td><td>43,9%</td><td>24.545</td><td>32.738</td></tr>
+      <tr><td>SED</td><td>758,7</td><td>1.582,3</td><td>1.551,8¹</td><td>+108,5%</td><td>21,1%</td><td>21,2%</td><td>24.618</td><td>27.409</td></tr>
+      <tr><td>PMMS</td><td>311,2</td><td>544,7</td><td>598,0</td><td>+75,0%</td><td>8,7%</td><td>7,3%</td><td>5.983</td><td>5.651</td></tr>
+      <tr><td>SEFAZ</td><td>225,4</td><td>287,3</td><td>308,2</td><td>+27,5%</td><td>6,3%</td><td>3,9%</td><td>1.404</td><td>884</td></tr>
+      <tr><td>DGPC</td><td>0,0</td><td>264,6</td><td>274,6</td><td>nova²</td><td>0%</td><td>3,5%</td><td>–</td><td>1.984</td></tr>
+      <tr><td>FUNSAU</td><td>109,9</td><td>196,6</td><td>219,2</td><td>+78,8%</td><td>3,1%</td><td>2,6%</td><td>1.907</td><td>2.151</td></tr>
+      <tr><td>CBMMS</td><td>93,2</td><td>182,4</td><td>195,8</td><td>+95,6%</td><td>2,6%</td><td>2,4%</td><td>1.524</td><td>1.673</td></tr>
+      <tr><td>AGEPEN</td><td>82,0</td><td>168,7</td><td>175,3</td><td>+105,8%</td><td>2,3%</td><td>2,3%</td><td>1.444</td><td>1.934</td></tr>
+      <tr><td>UEMS</td><td>75,0</td><td>158,5</td><td>166,4</td><td>+111,3%</td><td>2,1%</td><td>2,1%</td><td>1.109</td><td>1.442</td></tr>
+      <tr><td>SEJUSP</td><td>194,6</td><td>113,7</td><td>117,4</td><td>−41,6%²</td><td>5,4%</td><td>1,5%</td><td>2.933</td><td>1.176</td></tr>
+      <tr><td>SAD</td><td>48,2</td><td>95,1</td><td>97,9</td><td>+97,4%</td><td>1,3%</td><td>1,3%</td><td></td><td></td></tr>
+      <tr><td>SES</td><td>59,7</td><td>91,0</td><td>104,7</td><td>+52,4%</td><td>1,7%</td><td>1,2%</td><td></td><td></td></tr>
+      <tr><td>PGE</td><td>28,7</td><td>70,1</td><td>86,9</td><td>+144,2%</td><td>0,8%</td><td>0,9%</td><td></td><td></td></tr>
+      <tr><td>DETRAN</td><td>36,4</td><td>57,4</td><td>59,5</td><td>+57,8%</td><td>1,0%</td><td>0,8%</td><td></td><td></td></tr>
+      <tr><td>SEAD (ex-SEDHAST)</td><td>26,3</td><td>44,1</td><td>48,3</td><td>+67,7%</td><td>0,7%</td><td>0,6%</td><td></td><td></td></tr>
+    </tbody></table></div>
+    <p class="note">¹ A queda da SED é artefato da projeção ×1,5 (contratos temporários e 13º); de jan–ago 2025 sobre jan–ago 2024, a SED cresceu +7,55%. ² A DGPC foi desmembrada da SEJUSP em ago/2016; somadas, passaram de R$ 194,6 mi para R$ 378,3 mi (+94,4%).</p>
+  </div></details>
+
+  <details><summary>Tabela — remuneração média líquida mensal por órgão (R$)</summary><div class="inner"><div class="tbl"><table>
+    <thead><tr><th>Órgão</th><th>2015</th><th>2021</th><th>2022</th><th>2024</th><th>2025 (jan–ago)</th><th>Var. 15→24</th></tr></thead>
+    <tbody>
+      <tr><td>SEFAZ</td><td>13.375,62</td><td>17.556,14</td><td>20.870,89</td><td>27.094,89</td><td>29.747,75</td><td>+102,6%</td></tr>
+      <tr><td>PGE</td><td>12.717,37</td><td>13.617,66</td><td>15.326,87</td><td>18.166,87</td><td>22.197,79</td><td>+42,9%</td></tr>
+      <tr><td>CGE</td><td>(2017) 9.448,24</td><td>9.791,08</td><td>12.385,73</td><td>12.752,04</td><td>15.022,61</td><td>–</td></tr>
+      <tr><td>DGPC</td><td>(2016) 6.464,40</td><td>8.320,15</td><td>10.848,76</td><td>11.114,25</td><td>11.872,29</td><td>–</td></tr>
+      <tr><td>SEGOV</td><td>4.070,03</td><td>6.589,59</td><td>8.088,85</td><td>9.969,06</td><td>10.253,48</td><td>+144,9%</td></tr>
+      <tr><td>CBMMS</td><td>5.100,00</td><td>6.733,99</td><td>8.278,56</td><td>9.096,20</td><td>9.764,28</td><td>+78,4%</td></tr>
+      <tr><td>UEMS</td><td>5.631,68</td><td>7.099,77</td><td>8.393,99</td><td>9.173,98</td><td>9.358,94</td><td>+62,9%</td></tr>
+      <tr><td>AGEPREV</td><td>4.683,14</td><td>6.152,70</td><td>6.960,21</td><td>8.331,66</td><td>8.849,59</td><td>+77,9%</td></tr>
+      <tr><td>SEJUSP</td><td>5.530,37</td><td>5.726,27</td><td>7.952,09</td><td>8.059,63</td><td>8.512,58</td><td>+45,7%</td></tr>
+      <tr><td>PMMS</td><td>4.335,68</td><td>6.021,12</td><td>7.375,26</td><td>8.035,84</td><td>8.350,42</td><td>+85,3%</td></tr>
+      <tr><td>FUNSAU</td><td>4.806,66</td><td>5.871,76</td><td>6.512,68</td><td>7.612,12</td><td>8.262,12</td><td>+58,4%</td></tr>
+      <tr><td>AGEPEN</td><td>4.730,98</td><td>4.876,53</td><td>6.291,85</td><td>7.269,47</td><td>7.589,47</td><td>+53,7%</td></tr>
+      <tr><td>SES</td><td>3.940,54</td><td>5.036,42</td><td>5.783,20</td><td>6.880,64</td><td>7.513,80</td><td>+74,6%</td></tr>
+      <tr><td>SAD</td><td>3.540,98</td><td>4.954,07</td><td>5.621,79</td><td>6.417,66</td><td>6.663,56</td><td>+81,2%</td></tr>
+      <tr><td>DETRAN</td><td>2.978,53</td><td>4.467,65</td><td>5.278,54</td><td>5.222,36</td><td>5.614,32</td><td>+75,3%</td></tr>
+      <tr><td>SED</td><td>2.562,05</td><td>3.234,03</td><td>3.743,84</td><td>4.802,00</td><td>4.882,78</td><td>+87,4%</td></tr>
+      <tr><td>SEAD</td><td>1.805,52</td><td>2.514,88</td><td>2.929,70</td><td>3.813,18</td><td>4.281,30</td><td>+111,2%</td></tr>
+    </tbody></table></div>
+    <p class="note">É a média simples das médias mensais (inclui 13º e verbas eventuais; 2025 não tem dezembro). A GOVERNADORIA foi omitida porque passou de ≈20 para 2–5 registros em 2023, o que torna a série incomparável.</p>
+  </div></details>
+
+  <h3>Achados sobre a folha por órgão</h3>
+  <div class="card"><ol class="find">
+    <li><b>Salto de 2022.</b> Os aposentados tiveram um degrau único em jan/2022 (+10,3%), e os ativos subiram gradualmente de jan a jun/2022 (de R$ 255 mi para R$ 286 mi por mês). As maiores altas de 2021 para 2022 foram SEJUSP +61,7%, DGPC +40,4%, AGEPEN +35,4%, SES +29,1% e SED +27,0%. Isso é compatível com reajustes após o congelamento de 2020–21 (LC 173), mas é uma hipótese: os arquivos não trazem explicação.</li>
+    <li><b>Queda das aposentadorias em jan/2021</b> (−5,0%). Como a folha é líquida, a queda provavelmente reflete o aumento da contribuição previdenciária de inativos. Também é hipótese.</li>
+    <li><b>Dez/2024 atípico.</b> A folha de ativos ficou 38,6% acima da média de jan–nov, contra 22–23% em 2022–23, e o total do mês chegou a R$ 748,6 mi, o pico da série. Pode haver pagamento extraordinário além do 13º.</li>
+    <li><b>SEFAZ</b>: −37% de servidores (de 1.404 para 884) e remuneração média +102,6%; a massa salarial subiu só 27,5%. A média de 2025, R$ 29.748, é a maior do Estado.</li>
+    <li><b>PGE</b>: massa salarial +144% (2015–24) e +31% em jan–ago 2025; efetivo +70,5%.</li>
+    <li><b>SED</b>: 21% da folha, com média baixa (R$ 4.883) e forte sazonalidade. São ≈16 mil registros em janeiro contra ≈26 mil no resto do ano, por causa dos contratos temporários. 2016 (média de 30.630, pico de 34.719 em jul) destoa e merece verificação.</li>
+    <li><b>Reorganizações:</b> a DGPC começa em ago/2016 com a Polícia Civil saindo da SEJUSP. A CGE existe desde 2017, a Escola de Governo também desde 2017 e a FADEB/MS desde 2023. A CASA CIVIL fica zerada de 2017 a 2021 (provavelmente absorvida pela SEGOV). A FUNDECT passa de 46 para 1.117 registros (bolsistas) e cai em out/2024.</li>
+  </ol></div>
+</div></section>
+
+<!-- ============ CATEGORIAS ============ -->
+<section id="categorias"><div class="wrap">
+  <h2>Estudo 3 — Folha por categoria de servidor</h2>
+  <p class="sub">285 categorias (cargos), das quais só 145 têm despesa em todos os 11 anos. O total anual coincide com a folha por órgão a partir de 2020; de 2015 a 2019 fica R$ 1–32 mi abaixo por causa do erro de consolidação de ASSISTENTE/OUVIDOR.</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">PROFESSOR em 2024</div><div class="v">24,8%</div><div class="d">da folha · R$ 1,85 bi · 18.832 servidores</div></div>
+    <div class="kpi"><div class="l">Top 5 categorias</div><div class="v">54,0%</div><div class="d">da despesa de 2024 (top 20 = 82,9%)</div></div>
+    <div class="kpi"><div class="l">Maior média mensal 2025</div><div class="v">R$ 53 mil</div><div class="d">Procurador do Estado 1ª cat. (39 servidores)</div></div>
+    <div class="kpi"><div class="l">"A REGULARIZAR"</div><div class="v">764</div><div class="d">vínculos sem cargo em 2025 (eram 1.338) · 0,25% da folha</div></div>
+  </div>
+
+  <div class="card">
+    <h4>Top 15 categorias em 2024: despesa e variação desde 2015</h4>
+    <div class="cap">R$ milhões · barra clara = 2015, barra escura = 2024</div>
+    <div class="legend"><span><i style="background:var(--s1-soft)"></i>2015</span><span><i style="background:var(--s1)"></i>2024</span></div>
+    <div id="ch-cat"></div>
+    <p class="note">ESPECIALISTA DE EDUCAÇÃO – 36H surge em 2017 (sucede "ESPECIALISTA DE EDUCAÇÃO"). FISCAL TRIBUTÁRIO e AUDITOR FISCAL absorveram AGENTE TRIBUTÁRIO e FISCAL DE RENDAS em 2016, então parte do crescimento é reclassificação. POLICIAL PENAL de 2015 a 2021 corresponde ao antigo AGENTE PENITENCIÁRIO.</p>
+  </div>
+
+  <div class="card">
+    <h4>Remuneração média mensal das maiores categorias</h4>
+    <div class="cap">R$ por servidor por mês (despesa ÷ servidores ÷ 12; ÷ 8 em 2025)</div>
+    <div class="tbl"><table>
+      <thead><tr><th>Categoria</th><th>2015</th><th>2018</th><th>2020</th><th>2022</th><th>2024</th><th>2025</th><th>Var. 15→25</th><th>Servidores 2025</th></tr></thead>
+      <tbody>
+        <tr><td>AUDITOR FISCAL DA REC. ESTADUAL</td><td>22.071</td><td>22.597</td><td>25.624</td><td>26.611</td><td>31.466</td><td>34.248</td><td>+55,2%</td><td></td></tr>
+        <tr><td>FISCAL TRIBUTÁRIO ESTADUAL</td><td>18.433</td><td>19.928</td><td>21.953</td><td>24.246</td><td>28.360</td><td>30.710</td><td>+66,6%</td><td>1.573</td></tr>
+        <tr><td>DELEGADO DE POLÍCIA</td><td>18.579</td><td>19.806</td><td>21.006</td><td>23.478</td><td>26.268</td><td>28.079</td><td>+51,1%</td><td></td></tr>
+        <tr><td>OFICIAIS SUPERIORES</td><td>16.956</td><td>18.036</td><td>21.035</td><td>23.447</td><td>26.336</td><td>27.586</td><td>+62,7%</td><td></td></tr>
+        <tr><td>ESPECIALISTA DE EDUCAÇÃO – 36H</td><td>–</td><td>8.223</td><td>9.378</td><td>10.673</td><td>14.361</td><td>14.997</td><td>–</td><td>1.231</td></tr>
+        <tr><td>PROFESSOR DE ENSINO SUPERIOR</td><td>8.708</td><td>10.373</td><td>10.086</td><td>11.981</td><td>13.928</td><td>14.496</td><td>+66,5%</td><td></td></tr>
+        <tr><td>OFICIAIS SUBALTERNOS</td><td>8.467</td><td>8.813</td><td>10.024</td><td>11.745</td><td>12.630</td><td>13.546</td><td>+60,0%</td><td>676</td></tr>
+        <tr><td>PROF. DE SERV. HOSPITALARES</td><td>7.389</td><td>9.606</td><td>9.786</td><td>11.484</td><td>13.193</td><td>12.935</td><td>+75,1%</td><td></td></tr>
+        <tr><td>SUBTENENTE E SARGENTOS</td><td>5.592</td><td>6.162</td><td>6.659</td><td>8.130</td><td>8.996</td><td>9.505</td><td>+70,0%</td><td>6.631</td></tr>
+        <tr><td>AGENTE DE POLÍCIA JUDICIÁRIA</td><td>4.973</td><td>6.116</td><td>6.724</td><td>8.316</td><td>8.364</td><td>9.071</td><td>+82,4%</td><td>2.785</td></tr>
+        <tr><td><b>PROFESSOR</b></td><td>3.514</td><td>4.810</td><td>5.299</td><td>6.181</td><td>8.164</td><td>8.491</td><td><b>+141,6%</b></td><td>18.840</td></tr>
+        <tr><td>POLICIAL PENAL</td><td>4.675</td><td>5.147</td><td>5.115</td><td>6.358</td><td>7.261</td><td>7.584</td><td>+62,2%</td><td>2.515</td></tr>
+        <tr><td>CABOS E SOLDADOS</td><td>3.440</td><td>4.007</td><td>4.488</td><td>5.323</td><td>5.727</td><td>6.083</td><td>+76,8%</td><td>4.902</td></tr>
+        <tr><td>PROFESSOR CONVOCADO</td><td>2.357</td><td>2.987</td><td>2.326</td><td>2.883</td><td>3.966</td><td>3.334</td><td>+41,5%</td><td>2.342*</td></tr>
+        <tr><td><b>AGENTE DE ATIV. EDUCACIONAIS</b></td><td>1.307</td><td>1.735</td><td>1.766</td><td>2.157</td><td>2.541</td><td>2.960</td><td><b>+126,5%</b></td><td>6.965</td></tr>
+      </tbody></table></div>
+    <p class="note">* Em 2025 PROFESSOR CONVOCADO foi dividido entre "PROFESSOR CONVOCADO" e "PROFESSOR CONVOCADO – EM SALA" (9.663). Analisada sozinha, a categoria aparenta uma queda de 85% que não aconteceu; somando as duas, a projeção é R$ 540,8 mi (−13,8% vs 2024). Os procuradores do Estado (4 classes, 18 a 54 servidores cada) sobem 23–28% de 2024 para 2025 e chegam a R$ 47–53 mil por mês.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Maiores variações de efetivo (2015 → 2024)</h4>
+      <div class="cap">Servidores (média anual)</div>
+      <div id="ch-cat-ef"></div>
+    </div>
+    <div class="card">
+      <h4>Rotatividade de categorias</h4>
+      <div class="cap">Nº de categorias que surgem (primeiro ano com despesa) e que se encerram (último ano)</div>
+            <div id="ch-cat-turn"></div>
+      <p class="note">Ondas em 2018/2019 (reforma de cargos em comissão: 56 categorias encerradas) e em 2023 (20 novas categorias CCA-00 a CCA-16, que somam R$ 228 mi e 3.214 servidores em 2024). 2015 tem 209 categorias de partida, fora da escala do gráfico.</p>
+    </div>
+  </div>
+
+  <h3>Achados sobre as categorias</h3>
+  <div class="card"><ol class="find">
+    <li><b>Polícia Militar: progressão de praças.</b> CABOS E SOLDADOS caiu de 5.853 para 4.902 servidores, enquanto SUBTENENTE E SARGENTOS subiu de 3.686 para 6.631 (+80%, com despesa +188%) e OFICIAIS SUBALTERNOS de 356 para 676.</li>
+    <li><b>Educação:</b> PROFESSOR teve a maior alta absoluta (+R$ 1,09 bi) com efetivo quase estável (+4,7%). Ou seja, o crescimento veio da remuneração (+142%). PROFESSOR CONVOCADO ganhou +4.448 servidores entre 2015 e 2024.</li>
+    <li><b>Socioeducativo:</b> AGENTE DE AÇÕES SOCIOEDUCACIONAIS caiu de 272 para 1 servidor (substituído por AGENTE DE SEGURANÇA SOCIOEDUCATIVA, com sufixos –MED e –SUP).</li>
+    <li><b>Saúde:</b> em 2021 as categorias ASSISTENTE DE SERV. DE SAÚDE I/II e TÉC. SERV. HOSPITALARES I/II foram substituídas por novas nomenclaturas sem numeral. As "quedas" de −R$ 18 a −21 mi são renomeações.</li>
+    <li><b>CONTRATO PÚBLICO</b>: a despesa subiu de R$ 6,6 mi para R$ 71,5 mi (+975%), e o efetivo foi de 325 (2015) para 2.306 (2025).</li>
+    <li><b>"A REGULARIZAR"</b>: R$ 213,6 mi acumulados (0,38%), com 760–1.340 vínculos sem cargo identificado e remuneração média de R$ 1,2–2,1 mil. O peso é pequeno e decrescente, mas merece explicação.</li>
+  </ol></div>
+</div></section>
+
+<!-- ============ DESVIO ============ -->
+<section id="desvio"><div class="wrap">
+  <h2>Planilha "Consolidado – Desvio da média"</h2>
+  <p class="sub">Tem 135.271 linhas, uma por <b>nome</b> (homônimos e múltiplos vínculos ficam fundidos), com 128 colunas mensais, total, média e "desvio". Não tem coluna de cargo nem de órgão. Por conter dados pessoais, nenhum nome é reproduzido aqui.</p>
+
+  <div class="callout warn"><b class="tag">Atenção ao método</b>O "desvio" é o valor de ago/2025 menos a <b>média nominal da própria pessoa</b> de 2015 a 2025. Ele não compara a pessoa com a média da categoria. Como a folha dobrou no período, quase todos ficam acima da própria média (mediana de +R$ 1.525, ou +37,9%), e só ≈11% têm desvio negativo. As 55.297 pessoas sem pagamento em ago/2025 recebem desvio = −média, o que não tem significado.</div>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Distribuição do desvio (pagos em ago/2025)</h4>
+      <div class="cap">Nº de linhas por faixa de desvio em R$ · n = 79.974</div>
+      <div id="ch-desvio"></div>
+    </div>
+    <div class="card">
+      <h4>Números da base</h4>
+      <div class="tbl"><table><tbody>
+        <tr><td>Total 128 meses</td><td>R$ 51,38 bi</td></tr>
+        <tr><td>Cobertura frente ao Filtro de categorias</td><td>89,9% a 91,6% por ano</td></tr>
+        <tr><td>Linhas com os 128 meses preenchidos</td><td>40.685</td></tr>
+        <tr><td>Pagos em ago/2025</td><td>79.974</td></tr>
+        <tr><td>Ago/2025: média · mediana · p99</td><td>R$ 7.709 · 5.834 · 38.037</td></tr>
+        <tr><td>Ago/2025 acima de R$ 46.366 (teto ref., não verificado)</td><td>194 linhas</td></tr>
+        <tr><td>Ago/2025 acima de R$ 100 mil</td><td>3 linhas</td></tr>
+        <tr><td>Células mensais acima de R$ 100 mil (série toda)</td><td>179, concentradas em 2025</td></tr>
+        <tr><td>Desvio acima de +R$ 20 mil · acima de +100%</td><td>244 · 3.864</td></tr>
+        <tr><td>1% com maior total recebido</td><td>9,0% do total</td></tr>
+      </tbody></table></div>
+      <p class="note">Nos 20 maiores desvios, ago/2025 é quase sempre o maior mês da série, o que é típico de pagamentos eventuais (rescisão, férias, atrasados). Valores acima do teto não provam irregularidade, porque podem ser verbas indenizatórias.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ QUALIDADE ============ -->
+<section id="qualidade"><div class="wrap">
+  <h2>Qualidade dos dados e inconsistências</h2>
+  <p class="sub">Classificação: <span class="pill crit">Erro</span> afeta números publicados · <span class="pill warn">Método</span> afeta a interpretação · <span class="pill">Limitação</span> exige ressalva.</p>
+
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Tipo</th><th class="wrap-txt">Problema</th><th class="wrap-txt">Impacto</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill crit">Erro</span></td><td class="wrap-txt">ASSISTENTE e OUVIDOR: o Consolidado do Filtro pegou só a variante com espaço no fim do nome</td><td class="wrap-txt">ASSISTENTE 2015 aparece como R$ 0,1 mi (correto: R$ 21,4 mi, ≈956 servidores). Faltam R$ 21,5 · 26,8 · 30,0 · 31,9 · 0,7 mi de 2015 a 2019, e o erro chega ao PDF de 853 p.</td></tr>
+      <tr><td><span class="pill crit">Erro</span></td><td class="wrap-txt">Total da tabela-resumo de credores somou a coluna de ticket médio</td><td class="wrap-txt">R$ 26,71 bi / 16,67% → correto: R$ 26,38 bi / 16,46%. Na tabela de ticket diário, a linha "Total" copia a linha "Outras"</td></tr>
+      <tr><td><span class="pill crit">Erro</span></td><td class="wrap-txt">Rótulo da p.5 do PDF de 128 p.: "jan/2015 ativos R$ 157.882.344" é o valor de fev/2015</td><td class="wrap-txt">Correto: R$ 151.826.422,90</td></tr>
+      <tr><td><span class="pill crit">Erro</span></td><td class="wrap-txt">Dez/2022, SEILOG: total 0 com 186 registros nas abas por órgão</td><td class="wrap-txt">Faltam R$ 1.073.981,80; 2022 = R$ 6,0553 bi numa base e R$ 6,0543 bi na outra</td></tr>
+      <tr><td><span class="pill crit">Erro</span></td><td class="wrap-txt">O gráfico da categoria Comunicação diz "27 empresas"</td><td class="wrap-txt">Os dados e a tabela têm 26</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">Projeções de 2025 lineares (×1,5 ou ×364/233), sem 13º e sem sazonalidade de dezembro</td><td class="wrap-txt">Subestimam o ano em ≈3% no total e em ≈10% na SED. Duas projeções totais diferentes para a folha (R$ 7,892 vs 7,871 bi)</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">"Salário Médio Anual" é na verdade média mensal; no estudo por órgão é média não ponderada de médias</td><td class="wrap-txt">Título enganoso; séries instáveis em órgãos ou categorias com poucos servidores (63 combinações categoria×ano com menos de 1 servidor médio)</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">"Desvio da média" contra a média nominal da própria pessoa</td><td class="wrap-txt">Não identifica outliers por cargo; viés positivo estrutural</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">Classificação de "privados" inclui entes públicos e paraestatais (FUNJECC R$ 427 mi, IAGRO, Sanesul, Conselho de Trânsito, SEBRAE, FONPLATA…), pessoas físicas e "PENSÃO ALIMENTÍCIA" (R$ 482,6 mi na seleção de 212)</td><td class="wrap-txt">Infla o gasto "privado" e distorce os rankings de "Outras"</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">Grafias diferentes do mesmo credor (Instituto Acqua ×3, Health Nutrição ×2, Nutri &amp; Saúde ×3, General Motors ±ponto) e nomes de categoria com espaço no fim, hífen, erro de grafia ou sem acento</td><td class="wrap-txt">Subestima credores no ranking (Acqua: de 10º para 2º) e quebra séries de categorias</td></tr>
+      <tr><td><span class="pill warn">Método</span></td><td class="wrap-txt">Reorganizações de órgãos (SEJUSP→DGPC, CASA CIVIL→SEGOV) e de cargos (fusões em 2016, reforma de cargos em comissão em 2018–19, saúde em 2021, CCAs em 2023, PROFESSOR CONVOCADO em 2025) sem tratamento</td><td class="wrap-txt">Variações de 2015 para 2024 misturam crescimento real e reclassificação</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">Cobertura de credores em 2015–2016: 4,7 mil e 5,2 mil credores, contra 17–28 mil nos anos seguintes. Rubricas que aparecem e somem (Transf. ICMS a municípios só em 2015; IRRF de servidores só em 2017–21)</td><td class="wrap-txt">Taxas de crescimento com base 2015 ficam infladas; prefira base 2017</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">Folha líquida (após IR e previdência), sem encargos patronais</td><td class="wrap-txt">Não comparável com a despesa de pessoal da LRF/RGF; mudanças de alíquota afetam a série</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">Todos os valores são nominais; a natureza da despesa de credores (empenho, liquidação ou pagamento) não está documentada</td><td class="wrap-txt">Comparações reais exigem deflação pelo IPCA</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">A planilha de desvio cobre só 90% do Filtro, é agregada por nome e não tem cargo nem órgão</td><td class="wrap-txt">Base não conciliada com as demais</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">Sem rastreabilidade: só valores colados, sem fórmulas e sem metadados de extração; aba "Gráficos" com <code>#REF!</code>; aba "Demais e. privadas (−45m)" contém credores acima de R$ 45 mi</td><td class="wrap-txt">Difícil auditar ou atualizar</td></tr>
+      <tr><td><span class="pill">Limitação</span></td><td class="wrap-txt">Gráficos dos PDFs com o ponto "2025 (até agosto)" sem projeção</td><td class="wrap-txt">Queda visual enganosa no último ano</td></tr>
+    </tbody></table></div></div>
+</div></section>
+
+<!-- ============ RECOMENDAÇÕES ============ -->
+<section id="recomendacoes"><div class="wrap">
+  <h2>Recomendações</h2>
+  <div class="grid2">
+    <div class="card"><h4>Correções imediatas</h4><ol class="find">
+      <li>Normalizar nomes com <code>TRIM</code> antes de consolidar e regerar ASSISTENTE e OUVIDOR, o Consolidado do Filtro e as páginas correspondentes do PDF de 853 p.</li>
+      <li>Corrigir o total da tabela-resumo de credores (R$ 26.378.221.282,10; 16,46%) e a linha "Total" da tabela de ticket diário.</li>
+      <li>Unificar grafias de credores (Instituto Acqua, Health Nutrição, Nutri &amp; Saúde, GM) e refazer o ranking.</li>
+      <li>Renomear "Salário Médio Anual" para "Remuneração média mensal (líquida)".</li>
+      <li>Ajustar o rótulo de jan/2015 da p.5 e a contagem de Comunicação (26).</li>
+    </ol></div>
+    <div class="card"><h4>Melhorias de método</h4><ol class="find">
+      <li>Projetar 2025 com o fator sazonal histórico (jan–ago → ano, ≈1,033 no total em 2024) ou comparar só jan–ago com jan–ago.</li>
+      <li>Deflacionar as séries pelo IPCA (IBGE) e mostrar valores reais ao lado dos nominais.</li>
+      <li>Reclassificar entes públicos, pessoas físicas e pensão alimentícia fora de "credores privados".</li>
+      <li>Criar tabelas de correspondência de órgãos e cargos (DGPC/SEJUSP, fusões de 2016, CCAs de 2023, PROF. CONVOCADO 2025) para séries comparáveis.</li>
+      <li>Refazer o "desvio" por <b>cargo × mês</b> (ex.: valor acima do p95 da categoria no mesmo mês), o que exige cruzar a base nominal com o cargo.</li>
+      <li>Usar 2017 como base para credores, ou documentar a cobertura parcial de 2015–2016.</li>
+      <li>Remover duplicatas de arquivos (os dois "PARTE 2" idênticos; "para impressao.pdf") e corrigir os nomes trocados dos relatórios de pessoal.</li>
+    </ol></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Fontes: arquivos em <code>salvos/monitoramento/</code> (dados originais do Portal da Transparência de MS, conforme indicado nos próprios relatórios). Os valores de IPCA citados são aproximados e devem ser conferidos no IBGE. A análise foi feita somente por leitura; nenhum arquivo de origem foi alterado.
+</div></footer>
+
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+// ---------- theme toggle ----------
+const root=document.documentElement, btn=document.getElementById('themeBtn');
+function cur(){const t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+function label(){btn.textContent=cur()==='dark'?'☀ Claro':'☾ Escuro'}
+try{const s=localStorage.getItem('theme');if(s)root.setAttribute('data-theme',s)}catch(e){}
+label();
+btn.addEventListener('click',()=>{const n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('theme',n)}catch(e){}label();});
+
+// ---------- helpers ----------
+const NS='http://www.w3.org/2000/svg';
+const fmt=(v,d=1)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmt0=v=>v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+const tip=document.getElementById('tip');
+function showTip(ev,html){tip.innerHTML=html;tip.style.opacity=1;moveTip(ev)}
+function moveTip(ev){const pad=14;let x=ev.pageX+pad,y=ev.pageY+pad;const w=tip.offsetWidth,h=tip.offsetHeight;if(x+w>window.scrollX+innerWidth-8)x=ev.pageX-w-pad;if(y+h>window.scrollY+innerHeight-8)y=ev.pageY-h-pad;tip.style.left=x+'px';tip.style.top=y+'px'}
+function hideTip(){tip.style.opacity=0}
+document.body.appendChild(tip);tip.style.position='absolute';
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;const s=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;return s*p}
+function ticks(max,n=5){const m=niceMax(max);const step=m/n;const t=[];for(let i=0;i<=n;i++)t.push(step*i);return t}
+function roundedTopRect(g,x,y,w,h,r,fill,extra){r=Math.min(r,w/2,h);const d=`M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;const p=el('path',Object.assign({d,fill},extra||{}),g);return p}
+function roundedRightRect(g,x,y,w,h,r,fill,extra){r=Math.min(r,h/2,w);const d=`M${x},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h-r}Q${x+w},${y+h} ${x+w-r},${y+h}H${x}Z`;return el('path',Object.assign({d,fill},extra||{}),g)}
+
+// Vertical (stacked) bar chart
+function vbar(id,{cats,series,height=300,unit='',dec=0,stackTotalLabel=false,hatchLast=false,yfmt}){
+  const host=document.getElementById(id);host.classList.add('chart');
+  const W=Math.max(host.clientWidth,320),H=height,m={t:18,r:8,b:28,l:52};
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img'},host);
+  const totals=cats.map((_,i)=>series.reduce((s,se)=>s+(se.data[i]||0),0));
+  const tk=ticks(Math.max(...totals));const ymax=tk[tk.length-1];
+  const iw=W-m.l-m.r,ih=H-m.t-m.b;const y=v=>m.t+ih-(v/ymax)*ih;
+  const yf=yfmt||(v=>fmt0(v));
+  tk.forEach(t=>{el('line',{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),class:t===0?'bl':'gl'},svg);const tx=el('text',{x:m.l-8,y:y(t)+4,'text-anchor':'end'},svg);tx.textContent=yf(t)});
+  const bw=iw/cats.length;const barW=Math.min(bw*0.62,46);
+  if(hatchLast){const defs=el('defs',{},svg);const pat=el('pattern',{id:id+'-h',width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);el('rect',{width:6,height:6,fill:'var(--surface)',opacity:0},pat);el('line',{x1:0,y1:0,x2:0,y2:6,stroke:'var(--surface)','stroke-width':2.2,opacity:.55},pat)}
+  cats.forEach((c,i)=>{
+    const cx=m.l+bw*i+bw/2;const g=el('g',{},svg);let acc=0;const n=series.length;
+    series.forEach((se,si)=>{const v=se.data[i]||0;if(v<=0)return;const y0=y(acc),y1=y(acc+v);acc+=v;
+      const isTop=series.slice(si+1).every(s=>!(s.data[i]>0));
+      const hh=Math.max(y0-y1-(isTop?0:2),0.5);
+      if(isTop)roundedTopRect(g,cx-barW/2,y1,barW,hh,4,se.color);else el('rect',{x:cx-barW/2,y:y1+2,width:barW,height:hh,fill:se.color},g);
+      if(hatchLast&&i===cats.length-1)el('rect',{x:cx-barW/2,y:y1+(isTop?0:2),width:barW,height:hh,fill:`url(#${id}-h)`},g);
+    });
+    const tx=el('text',{x:cx,y:H-m.b+16,'text-anchor':'middle'},svg);tx.textContent=c;
+    if(stackTotalLabel){const tl=el('text',{x:cx,y:y(totals[i])-6,'text-anchor':'middle',class:'lbl'},svg);tl.textContent=stackTotalLabel(totals[i],i)}
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>{let h=`<div class="h">${c}</div>`;series.slice().reverse().forEach(se=>{const v=se.data[i];if(v==null)return;h+=`<div class="r"><span>${series.length>1?`<i style="background:${se.color}"></i>`:''}${se.name}</span><b>${fmt(v,dec)}${unit}</b></div>`});if(series.length>1)h+=`<div class="r" style="border-top:1px solid var(--border);margin-top:3px;padding-top:3px"><span>Total</span><b>${fmt(totals[i],dec)}${unit}</b></div>`;showTip(ev,h);g.style.opacity=1;svg.querySelectorAll('g').forEach(o=>{if(o!==g)o.style.opacity=.55})});
+    hit.addEventListener('mouseleave',()=>{hideTip();svg.querySelectorAll('g').forEach(o=>o.style.opacity=1)});
+  });
+  if(series.length>1){const lg=document.createElement('div');lg.className='legend';series.forEach(se=>{lg.insertAdjacentHTML('beforeend',`<span><i style="background:${se.color}"></i>${se.name}</span>`)});host.prepend(lg)}
+}
+
+// Horizontal bar chart (single or paired)
+function hbar(id,{rows,height,unit='',dec=1,labelW=170,valueFmt,tipFn,paired=false,signed=false}){
+  const host=document.getElementById(id);host.classList.add('chart');
+  const W=Math.max(host.clientWidth,300);const rowH=paired?30:24;const m={t:4,r:62,b:4,l:Math.min(labelW,W*0.42)};
+  const H=height||m.t+m.b+rows.length*rowH;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img'},host);
+  const vals=rows.flatMap(r=>paired?[r.a,r.b]:[r.v]);
+  const maxAbs=Math.max(...vals.map(Math.abs));const minV=Math.min(0,...vals);
+  const iw=W-m.l-m.r;const neg=signed&&minV<0;const zeroX=neg?m.l+iw*(Math.abs(minV)/(maxAbs+Math.abs(minV))):m.l;
+  const scale=v=>(Math.abs(v)/(neg?(maxAbs+Math.abs(minV)):maxAbs))*(neg?iw:iw);
+  const vf=valueFmt||(v=>fmt(v,dec)+unit);
+  rows.forEach((r,i)=>{
+    const y0=m.t+i*rowH;const g=el('g',{},svg);
+    const lt=el('text',{x:m.l-8,y:y0+rowH/2+4,'text-anchor':'end'},g);
+    let name=r.name;const maxCh=Math.floor(m.l/6.3);if(name.length>maxCh)name=name.slice(0,maxCh-1)+'…';lt.textContent=name;
+    if(paired){
+      const h=(rowH-8)/2;
+      if(r.a>0)roundedRightRect(g,zeroX,y0+3,scale(r.a),h-1,3,'var(--s1-soft)');
+      if(r.b>0)roundedRightRect(g,zeroX,y0+3+h+1,scale(r.b),h-1,3,'var(--s1)');
+      const vt=el('text',{x:zeroX+scale(Math.max(r.a,r.b))+6,y:y0+rowH/2+4,class:'lbl'},g);vt.textContent=vf(r.b);
+    }else{
+      const v=r.v;const w=scale(v);const color=r.color||'var(--s1)';const bh=rowH-8;
+      if(v>=0){roundedRightRect(g,zeroX,y0+4,Math.max(w,1),bh,3,color);const vt=el('text',{x:zeroX+w+6,y:y0+rowH/2+4,class:'lbl'},g);vt.textContent=vf(v)}
+      else{const x=zeroX-w;const d=`M${zeroX},${y0+4}H${x+3}Q${x},${y0+4} ${x},${y0+7}V${y0+4+bh-3}Q${x},${y0+4+bh} ${x+3},${y0+4+bh}H${zeroX}Z`;el('path',{d,fill:color},g);const vt=el('text',{x:zeroX+6,y:y0+rowH/2+4,class:'lbl'},g);vt.textContent=vf(v)}
+    }
+    const hit=el('rect',{x:0,y:y0,width:W,height:rowH,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>{showTip(ev,tipFn?tipFn(r):`<div class="h">${r.name}</div><div class="r"><span>Valor</span><b>${vf(r.v)}</b></div>`);svg.querySelectorAll('g').forEach(o=>o.style.opacity=o===g?1:.5)});
+    hit.addEventListener('mouseleave',()=>{hideTip();svg.querySelectorAll('g').forEach(o=>o.style.opacity=1)});
+  });
+  if(neg)el('line',{x1:zeroX,x2:zeroX,y1:0,y2:H,class:'bl'},svg);
+  else el('line',{x1:m.l,x2:m.l,y1:0,y2:H,class:'bl'},svg);
+}
+
+// ---------- DATA ----------
+const YRS=['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025p'];
+const C={obras:'var(--s1)',outras:'var(--s2)',ti:'var(--s3)',saude:'var(--s4)',com:'var(--s5)',sem:'var(--s6)'};
+const credCat=[
+ {name:'Obras Públicas',color:C.obras,data:[232.57,418.82,591.79,585.52,522.06,568.02,902.74,1962.07,2048.67,1491.46,1328.39]},
+ {name:'Outras',color:C.outras,data:[287.03,382.76,374.02,550.24,422.63,526.66,823.00,1212.96,1092.69,1296.96,1284.69]},
+ {name:'Tecnologia da Informação',color:C.ti,data:[247.00,282.21,281.76,291.37,280.66,307.22,357.02,466.64,604.86,644.56,699.95]},
+ {name:'Saúde e Nutrição',color:C.saude,data:[144.87,185.63,270.87,259.76,233.95,269.12,289.43,318.01,330.67,346.13,319.67]},
+ {name:'Comunicação e Eventos',color:C.com,data:[45.07,80.29,64.41,84.98,84.36,116.00,160.43,272.22,167.18,186.04,136.68]},
+ {name:'Sem categoria',color:C.sem,data:[4.34,20.25,11.14,11.55,13.98,5.71,0,51.34,61.39,25.57,24.49]},
+];
+vbar('ch-cred-cat',{cats:YRS.map(y=>y==='2025p'?'2025 (p)':y),series:credCat,unit:' mi',dec:1,height:340,hatchLast:true,stackTotalLabel:(t,i)=>(i===7||i===0||i===10)?fmt(t/1000,2)+' bi':''});
+
+vbar('ch-cred-share',{cats:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],series:[{name:'% privados no total',color:'var(--s1)',data:[7.95,13.55,14.38,14.91,12.53,13.96,16.34,21.58,21.12,19.29,18.31]}],unit:'%',dec:2,height:240,yfmt:v=>fmt0(v)+'%',stackTotalLabel:(t,i)=>(i===0||i===7||i===10)?fmt(t,1)+'%':''});
+
+hbar('ch-cred-tot',{rows:[
+ {name:'Obras Públicas (164)',v:10.174,color:C.obras},{name:'Outras (120)',v:7.791,color:C.outras},{name:'Tecnologia da Inf. (47)',v:4.211,color:C.ti},{name:'Saúde e Nutrição (44)',v:2.853,color:C.saude},{name:'Comunicação e Ev. (26)',v:1.348,color:C.com},{name:'Sem categoria (3)',v:0.221,color:C.sem}],
+ dec:2,unit:' bi',labelW:170,tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span>Total 2015–25</span><b>R$ ${fmt(r.v,2)} bi</b></div>`});
+
+const catName={obras:'Obras',outras:'Outras',ti:'TI',saude:'Saúde e Nutrição'};
+const top20=[
+ ['Digithobrasil Soluções em Software','ti',878.47,59.93,112.24,66.30],
+ ['Inovvati Tecnologia','ti',699.23,52.41,88.56,59.38],
+ ['Energisa MS','outras',663.72,23.06,219.63,71.24],
+ ['Águas Guariroba','outras',634.05,32.30,105.89,67.58],
+ ['Vale do Rio Novo Engenharia','obras',613.52,0,148.87,94.23],
+ ['Engepar Engenharia','obras',566.57,3.37,64.99,42.22],
+ ['Eng. e Com. Bandeirantes','obras',556.33,2.72,57.34,12.38],
+ ['Mil Tec TI','ti',487.82,0,75.58,46.56],
+ ['Unisaude – MS','saude',473.53,12.18,66.40,52.75],
+ ['Inst. Acqua-Ação, Cidadania…','outras',466.26,0,97.94,62.16],
+ ['FUNJECC','outras',427.33,6.02,23.11,18.54],
+ ['Guatos Prest. Serviços','outras',402.38,16.97,58.01,29.85],
+ ['H2L Equip. e Sistemas','ti',387.22,28.02,50.61,30.82],
+ ['Equipe Engenharia','obras',345.84,0,64.36,30.18],
+ ['Construtora São Cristovão','obras',336.24,0,89.02,6.82],
+ ['Volus Inst. Pagamento','outras',314.67,0,35.76,23.87],
+ ['Real Food Alimentação','saude',306.55,18.45,38.85,24.08],
+ ['Health Brasil Intelig. Saúde','saude',292.65,6.27,28.42,11.04],
+ ['Instituto Acqua','outras',289.45,0,87.36,86.90],
+ ['Sanesul','outras',286.82,13.61,53.83,31.90],
+];
+document.getElementById('lg-top').innerHTML=['obras','outras','ti','saude'].map(k=>`<span><i style="background:${C[k]}"></i>${catName[k]}</span>`).join('');
+hbar('ch-cred-top',{rows:top20.map(r=>({name:r[0],v:r[2],color:C[r[1]],cat:catName[r[1]],a:r[3],b:r[4],c:r[5]})),dec:1,unit:'',labelW:220,
+ tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span>Categoria</span><b>${r.cat}</b></div><div class="r"><span>Total 2015–25</span><b>R$ ${fmt(r.v,1)} mi</b></div><div class="r"><span>2015</span><b>${fmt(r.a,1)}</b></div><div class="r"><span>2024</span><b>${fmt(r.b,1)}</b></div><div class="r"><span>2025 (jan–ago)</span><b>${fmt(r.c,1)}</b></div>`});
+
+const rk=[
+ ['Energisa MS',163.25,'Energisa MS',219.63,'Vale do Rio Novo',94.23],
+ ['Eng. Bandeirantes',147.38,'Vale do Rio Novo',148.87,'Instituto Acqua',86.90],
+ ['Const. São Cristovão',141.59,'Digithobrasil',112.24,'Energisa MS',71.24],
+ ['Digithobrasil',108.23,'Águas Guariroba',105.89,'Águas Guariroba',67.58],
+ ['Vale do Rio Novo',101.46,'Inst. Acqua-Ação',97.94,'Digithobrasil',66.30],
+ ['LCM Construção',93.36,'Const. São Cristovão',89.02,'Inst. Acqua-Ação',62.16],
+ ['Águas Guariroba',93.01,'Inovvati',88.56,'Inovvati',59.38],
+ ['S/A Paulista Constr.',92.73,'Instituto Acqua',87.36,'Avance Construtora',53.63],
+ ['Engepar',90.87,'Mil Tec',75.58,'Unisaude',52.75],
+ ['Inovvati',89.69,'Unisaude',66.40,'Construtora Perfil',52.30],
+ ['Inst. Acqua-Ação',82.88,'Engepar',64.99,'Mil Tec',46.56],
+ ['Construtora Caiapó',75.56,'Equipe Engenharia',64.36,'S.H. Informática',43.85],
+ ['Equipe Engenharia',70.73,'Oi S/A',61.42,'Engepar',42.22],
+ ['Instituto Acqua',69.88,'Guatos',58.01,'Ag. Def. Sanitária (IAGRO)',40.56],
+ ['Mil Tec',68.63,'Eng. Bandeirantes',57.34,'Sanesul',31.90],
+ ['Unisaude',63.20,'S.H. Informática',55.23,'GEOI2 TI',31.75],
+ ['Guatos',57.98,'GEOI2 TI',55.13,'LCM Construção',31.02],
+ ['Const. Luiz Costa',56.81,'Sanesul',53.83,'H2L',30.82],
+ ['S.H. Informática',55.91,'H2L',50.61,'Equipe Engenharia',30.18],
+ ['Nosde Engenharia',51.15,'Nosde Engenharia',48.81,'Guatos',29.85],
+];
+document.getElementById('tb-rank').innerHTML=rk.map((r,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${r[0]}</td><td>${fmt(r[1],1)}</td><td style="text-align:left">${r[2]}</td><td>${fmt(r[3],1)}</td><td style="text-align:left">${r[4]}</td><td>${fmt(r[5],1)}</td></tr>`).join('');
+
+// Folha ativos/inativos (2025 = jan-ago*1.5)
+vbar('ch-folha',{cats:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025 (p)'],series:[
+ {name:'Ativos',color:'var(--s1)',data:[2217.4,2490.9,2541.6,2680.8,2601.5,2556.7,2716.9,3395.4,3712.0,4185.4,2907.4*1.5]},
+ {name:'Aposentados',color:'var(--s2)',data:[1182.5,1373.8,1540.9,1728.7,1908.1,2056.5,2013.5,2296.0,2555.7,2835.8,2025.6*1.5]},
+ {name:'Pensão por morte',color:'var(--s4)',data:[196.4,224.6,243.2,263.1,283.0,304.6,318.5,363.9,393.2,432.7,314.1*1.5]},
+],unit:' mi',dec:1,height:330,hatchLast:true,stackTotalLabel:(t,i)=>(i===0||i===7||i===9)?fmt(t/1000,2)+' bi':''});
+
+const org=[['AGEPREV',1379.7,3273.4],['SED',758.7,1582.3],['PMMS',311.2,544.7],['SEFAZ',225.4,287.3],['DGPC',0,264.6],['FUNSAU',109.9,196.6],['CBMMS',93.2,182.4],['AGEPEN',82.0,168.7],['UEMS',75.0,158.5],['SEJUSP',194.6,113.7],['SAD',48.2,95.1],['SES',59.7,91.0],['PGE',28.7,70.1],['DETRAN',36.4,57.4],['SEAD',26.3,44.1]];
+hbar('ch-orgaos',{rows:org.map(o=>({name:o[0],v:o[2],a:o[1]})),dec:1,labelW:80,valueFmt:v=>fmt0(v),
+ tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span>2015</span><b>R$ ${fmt(r.a,1)} mi</b></div><div class="r"><span>2024</span><b>R$ ${fmt(r.v,1)} mi</b></div><div class="r"><span>Variação</span><b>${r.a>0?(r.v/r.a-1>=0?'+':'')+fmt((r.v/r.a-1)*100,1)+'%':'nova'}</b></div>`});
+
+const yoy=[['PGE',30.97],['SES',19.69],['FUNSAU',14.88],['PMMS',12.91],['UEMS',10.75],['SEFAZ',10.68],['CBMMS',9.78],['AGEPREV',8.80],['SED',7.55],['SAD',5.55],['AGEPEN',5.01],['DGPC',4.70],['DETRAN',4.46],['SEJUSP',3.87]];
+hbar('ch-orgaos-yoy',{rows:yoy.map(o=>({name:o[0],v:o[1]})),dec:1,labelW:80,valueFmt:v=>'+'+fmt(v,1)+'%',
+ tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span>jan–ago 25 vs 24</span><b>+${fmt(r.v,2)}%</b></div>`});
+
+const cat=[['PROFESSOR',758.7,1845.0],['SUBTENENTE E SARGENTOS',247.3,712.0],['PROFESSOR CONVOCADO',247.1,627.3],['FISCAL TRIBUTÁRIO ESTADUAL',204.1,538.2],['CABOS E SOLDADOS',241.6,302.3],['AGENTE DE POLÍCIA JUDICIÁRIA',160.1,282.9],['POLICIAL PENAL',94.8,219.1],['ESPEC. DE EDUCAÇÃO – 36H',0,215.9],['AGENTE DE ATIV. EDUCACIONAIS',88.7,214.8],['OFICIAIS SUPERIORES',95.5,208.8],['DELEGADO DE POLÍCIA',98.3,180.6],['AUDITOR FISCAL DA REC. EST.',61.8,167.7],['PROF. DE ENSINO SUPERIOR',56.7,117.3],['PROF. SERV. HOSPITALARES',56.0,112.3],['OFICIAIS SUBALTERNOS',36.1,100.0]];
+hbar('ch-cat',{rows:cat.map(c=>({name:c[0],a:c[1],b:c[2]})),paired:true,labelW:210,valueFmt:v=>fmt(v,1),
+ tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span><i style="background:var(--s1-soft)"></i>2015</span><b>R$ ${fmt(r.a,1)} mi</b></div><div class="r"><span><i style="background:var(--s1)"></i>2024</span><b>R$ ${fmt(r.b,1)} mi</b></div><div class="r"><span>Variação</span><b>${r.a>0?'+'+fmt((r.b/r.a-1)*100,1)+'%':'nova (2017)'}</b></div>`});
+
+const ef=[['PROFESSOR CONVOCADO',4448],['SUBTENENTE E SARGENTOS',2910],['AGENTE ATIV. EDUCACIONAIS',1389],['ESPEC. EDUC. 36H',1253],['CONTRATO PÚBLICO',1166],['BOLSA FUNDECT',1066],['PROFESSOR',838],['POLICIAL PENAL',824],['TÉC. SERV. HOSP. I',-506],['A REGULARIZAR',-510],['ASSIST. SERV. SAÚDE I',-591],['TÉC. SERV. HOSP. II',-625],['ASSIST. SERV. SAÚDE II',-647],['AGENTE TRIBUTÁRIO',-648],['ESPECIALISTA DE EDUCAÇÃO',-1371],['CABOS E SOLDADOS',-1455]];
+hbar('ch-cat-ef',{rows:ef.map(e=>({name:e[0],v:e[1],color:e[1]>=0?'var(--s3)':'var(--s2)'})),signed:true,labelW:180,valueFmt:v=>(v>0?'+':'')+fmt0(v),
+ tipFn:r=>`<div class="h">${r.name}</div><div class="r"><span>Δ servidores 2015→2024</span><b>${(r.v>0?'+':'')+fmt0(r.v)}</b></div>`});
+
+vbar('ch-cat-turn',{cats:['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],series:[
+ {name:'Surgem',color:'var(--s3)',data:[9,6,3,19,0,6,9,20,2,2]},
+ {name:'Encerram',color:'var(--s2)',data:[0,2,29,27,0,4,8,7,3,0]}],dec:0,height:240});
+
+const dv=[['≤ −20 mil',2],['−20 a −10 mil',45],['−10 a −5 mil',110],['−5 a −2 mil',1093],['−2 a −1 mil',1634],['−1 mil a 0',6779],['0 a 1 mil',17815],['1 a 2 mil',18872],['2 a 5 mil',24952],['5 a 10 mil',6835],['10 a 20 mil',1593],['20 a 50 mil',237],['> 50 mil',7]];
+hbar('ch-desvio',{rows:dv.map(d=>({name:d[0],v:d[1],color:d[0].startsWith('−')||d[0].startsWith('≤')?'var(--s2)':'var(--s1)'})),labelW:110,valueFmt:v=>fmt0(v),
+ tipFn:r=>`<div class="h">Desvio ${r.name}</div><div class="r"><span>Linhas</span><b>${fmt0(r.v)}</b></div><div class="r"><span>% dos pagos</span><b>${fmt(r.v/79974*100,1)}%</b></div>`});
+
+})();
+</script>
+</body>
+</html>

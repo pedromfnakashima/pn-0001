@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de Publicação</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --surface-2:#f0efeb; --border:#e2e0da;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7873; --accent:#2a78d6;
+  --code-bg:#1e1e1c; --code-text:#f0efec; --code-muted:#9a998f;
+  --warn-bg:#fff4dc; --warn-bd:#eda100; --crit-bg:#fde8e7; --crit-bd:#e34948; --info-bg:#e6f0fc; --info-bd:#2a78d6; --ok-bg:#e3f5ec; --ok-bd:#1baf7a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86; --accent:#3987e5;
+    --code-bg:#0d0d0c; --code-text:#f0efec; --code-muted:#8f8e86;
+    --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5; --ok-bg:#10281e; --ok-bd:#199e70;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86; --accent:#3987e5;
+  --code-bg:#0d0d0c; --code-text:#f0efec; --code-muted:#8f8e86;
+  --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5; --ok-bg:#10281e; --ok-bd:#199e70;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+header.top{background:var(--surface);border-bottom:1px solid var(--border)}
+header.top .wrap{padding-top:36px;padding-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:30px;line-height:1.2;margin:6px 0 10px;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 8px;letter-spacing:-.01em}
+h3{font-size:16px;margin:24px 0 8px}
+p{margin:0 0 12px}
+.lede{color:var(--text-2)}
+a{color:var(--accent)}
+nav.toc{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px;scrollbar-width:none}
+nav.toc a{white-space:nowrap;color:var(--text-2);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px}
+nav.toc a:hover{background:var(--surface-2);color:var(--text)}
+.theme-btn{margin-left:auto;border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+section{padding:36px 0 4px;scroll-margin-top:48px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.callout{border-left:4px solid var(--info-bd);background:var(--info-bg);border-radius:6px;padding:12px 16px;margin:12px 0}
+.callout.warn{border-color:var(--warn-bd);background:var(--warn-bg)}
+.callout.crit{border-color:var(--crit-bd);background:var(--crit-bg)}
+.callout.ok{border-color:var(--ok-bd);background:var(--ok-bg)}
+.callout b.tag{font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+thead th{background:var(--surface-2);color:var(--text-2);font-weight:600}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-word}
+.code{position:relative;margin:10px 0 16px}
+.code pre{margin:0;background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;overflow-x:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+.code pre .c{color:var(--code-muted)}
+.copy{position:absolute;top:8px;right:8px;border:1px solid #444;background:#2b2b29;color:#ddd;border-radius:5px;font-size:11.5px;padding:3px 9px;cursor:pointer}
+.copy:hover{background:#3a3a37}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+ol.steps > li{counter-increment:s;position:relative;padding:0 0 18px 44px}
+ol.steps > li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:650;font-size:13px;display:flex;align-items:center;justify-content:center}
+ol.steps > li > b:first-child{display:block;margin-bottom:2px}
+ul.check{list-style:none;padding:0;margin:0}
+ul.check li{padding:6px 0 6px 28px;position:relative;border-bottom:1px solid var(--border)}
+ul.check li:last-child{border-bottom:0}
+ul.check li::before{content:"☐";position:absolute;left:2px;top:5px;color:var(--muted);font-size:16px}
+.diagram{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center;text-align:center;font-size:13px;margin:8px 0}
+.diagram .box{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 8px}
+.diagram .box b{display:block;font-size:13.5px}
+.diagram .box span{color:var(--muted);font-size:12px}
+.diagram .arr{color:var(--muted);font-size:18px}
+@media (max-width:640px){.diagram{grid-template-columns:1fr}.diagram .arr{transform:rotate(90deg)}h1{font-size:24px}}
+details{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+details summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";display:inline-block;width:16px;color:var(--muted);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .inner{padding:0 18px 14px}
+footer{color:var(--muted);font-size:12.5px;padding:32px 0 48px}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Projeto pn-0001 · documentação operacional · 13/10/2026</div>
+  <h1>Guia de publicação da análise no GitHub Pages</h1>
+  <p class="lede">Como a página <b>Análise de Monitoramento de Despesas MS</b> foi publicada, como atualizá-la, como compartilhar com terceiros com segurança e como despublicar.</p>
+  <p><b>Link público:</b> <a href="https://pedromfnakashima.github.io/pn-0001/">https://pedromfnakashima.github.io/pn-0001/</a></p>
+</div></header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#estado">Configuração atual</a>
+  <a href="#atualizar">Atualizar a página</a>
+  <a href="#novas">Publicar outras páginas</a>
+  <a href="#compartilhar">Compartilhar</a>
+  <a href="#seguranca">Cuidados</a>
+  <a href="#despublicar">Despublicar</a>
+  <a href="#problemas">Problemas comuns</a>
+  <button class="theme-btn" id="themeBtn" type="button">Tema</button>
+</div></nav>
+
+<!-- ESTADO ATUAL -->
+<section id="estado"><div class="wrap">
+  <h2>1. Como está configurado hoje</h2>
+  <div class="card">
+    <div class="diagram">
+      <div class="box"><b>resultados/analise_monitoramento.html</b><span>arquivo de trabalho (local, não versionado)</span></div>
+      <div class="arr">→</div>
+      <div class="box"><b>branch gh-pages / index.html</b><span>cópia publicada (GitHub)</span></div>
+      <div class="arr">→</div>
+      <div class="box"><b>pedromfnakashima.github.io/pn-0001/</b><span>site público</span></div>
+    </div>
+  </div>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Item</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td>Repositório</td><td><code>github.com/pedromfnakashima/pn-0001</code>, <b>público</b> desde 13/10/2026</td></tr>
+      <tr><td>Branch <code>main</code></td><td>Só <code>README.md</code> e <code>.gitignore</code></td></tr>
+      <tr><td>Branch <code>gh-pages</code></td><td>Só <code>index.html</code> (a página) e <code>.nojekyll</code> (desativa o processamento Jekyll). É a <b>única</b> fonte do site.</td></tr>
+      <tr><td>GitHub Pages</td><td>Ativado, publicando a raiz (<code>/</code>) do branch <code>gh-pages</code></td></tr>
+      <tr><td>Pastas locais não enviadas</td><td><code>salvos/</code>, <code>anotacoes/</code>, <code>resultados/</code> e <code>.vscode/</code> nunca foram commitadas e só existem no seu computador</td></tr>
+      <tr><td>GitHub CLI</td><td><code>gh</code> 2.102.0 em <code>~/.local/bin/gh</code>, autenticado como <code>pedromfnakashima</code> (token no keyring do sistema)</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="callout"><b class="tag">Importante</b>O arquivo em <code>resultados/</code> e a página publicada são <b>cópias independentes</b>. Editar o arquivo local <b>não</b> altera o site. É preciso seguir o passo a passo da seção 2.</div>
+</div></section>
+
+<!-- ATUALIZAR -->
+<section id="atualizar"><div class="wrap">
+  <h2>2. Passo a passo para atualizar a página</h2>
+  <p>Use este procedimento sempre que alterar <code>resultados/analise_monitoramento.html</code> e quiser refletir a mudança no site. Ele usa uma pasta temporária (<i>git worktree</i>), então o seu <code>main</code> e as pastas locais não são tocados.</p>
+
+  <ol class="steps">
+    <li><b>Revise o arquivo local antes de publicar</b>
+      Abra <code>resultados/analise_monitoramento.html</code> no navegador e passe pelo <a href="#seguranca">checklist de cuidados</a>. Tudo o que for publicado fica público.</li>
+    <li><b>Abra o terminal na pasta do projeto e confira o login do <code>gh</code></b>
+      <div class="code"><button class="copy">Copiar</button><pre>cd ~/Documentos/Projetos/MeusProjetos/Permanentes/pn-0001
+gh auth status</pre></div>
+      Se aparecer "not logged in", veja <a href="#login">Refazer o login</a>.</li>
+    <li><b>Crie uma pasta temporária com o branch <code>gh-pages</code></b>
+      <div class="code"><button class="copy">Copiar</button><pre>git fetch origin
+git worktree add /tmp/pn-ghp gh-pages
+git -C /tmp/pn-ghp pull --ff-only</pre></div></li>
+    <li><b>Copie a versão nova por cima do <code>index.html</code></b>
+      <div class="code"><button class="copy">Copiar</button><pre>cp resultados/analise_monitoramento.html /tmp/pn-ghp/index.html
+git -C /tmp/pn-ghp status --short   <span class="c"># deve mostrar só:  M index.html</span></pre></div>
+      Se aparecer qualquer outro arquivo além de <code>index.html</code>, <b>pare</b> e investigue antes de continuar.</li>
+    <li><b>Faça o commit e envie</b>
+      <div class="code"><button class="copy">Copiar</button><pre>git -C /tmp/pn-ghp add index.html
+git -C /tmp/pn-ghp commit -m "Atualiza análise de monitoramento (descreva a mudança)"
+git -C /tmp/pn-ghp push</pre></div></li>
+    <li><b>Remova a pasta temporária</b>
+      <div class="code"><button class="copy">Copiar</button><pre>git worktree remove /tmp/pn-ghp</pre></div></li>
+    <li><b>Confirme que o site foi reconstruído</b> (leva de 30 s a 2 min)
+      <div class="code"><button class="copy">Copiar</button><pre>gh api repos/pedromfnakashima/pn-0001/pages/builds/latest --jq '.status, .updated_at'
+<span class="c"># "built" = pronto · "building" = aguarde · "errored" = veja Problemas comuns</span></pre></div>
+      Depois abra o link e recarregue sem cache (<b>Ctrl+Shift+R</b>; no celular, feche e reabra a aba).</li>
+  </ol>
+
+  <details><summary>Versão em um único bloco (para quem já conhece o processo)</summary><div class="inner">
+    <div class="code"><button class="copy">Copiar</button><pre>cd ~/Documentos/Projetos/MeusProjetos/Permanentes/pn-0001 \
+&amp;&amp; git fetch origin \
+&amp;&amp; git worktree add /tmp/pn-ghp gh-pages \
+&amp;&amp; git -C /tmp/pn-ghp pull --ff-only \
+&amp;&amp; cp resultados/analise_monitoramento.html /tmp/pn-ghp/index.html \
+&amp;&amp; git -C /tmp/pn-ghp add index.html \
+&amp;&amp; git -C /tmp/pn-ghp commit -m "Atualiza análise de monitoramento" \
+&amp;&amp; git -C /tmp/pn-ghp push \
+; git worktree remove /tmp/pn-ghp</pre></div>
+    <p>Se o commit falhar com "nothing to commit", o arquivo publicado já é idêntico ao local e não há nada para atualizar.</p>
+  </div></details>
+
+  <details><summary>Voltar para uma versão anterior da página</summary><div class="inner">
+    <p>Cada atualização é um commit no <code>gh-pages</code>, então dá para desfazer a última:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>git fetch origin
+git log --oneline origin/gh-pages          <span class="c"># lista as versões publicadas</span>
+git worktree add /tmp/pn-ghp gh-pages
+git -C /tmp/pn-ghp pull --ff-only
+git -C /tmp/pn-ghp revert --no-edit HEAD   <span class="c"># desfaz a última publicação</span>
+git -C /tmp/pn-ghp push
+git worktree remove /tmp/pn-ghp</pre></div>
+  </div></details>
+</div></section>
+
+<!-- NOVAS PÁGINAS -->
+<section id="novas"><div class="wrap">
+  <h2>3. Publicar outras páginas no mesmo site</h2>
+  <p>Cada arquivo <code>.html</code> no branch <code>gh-pages</code> vira um endereço próprio. Para publicar, por exemplo, este guia ou uma nova análise <b>sem substituir</b> a principal:</p>
+  <div class="code"><button class="copy">Copiar</button><pre>cd ~/Documentos/Projetos/MeusProjetos/Permanentes/pn-0001
+git fetch origin
+git worktree add /tmp/pn-ghp gh-pages
+git -C /tmp/pn-ghp pull --ff-only
+cp resultados/NOME_DO_ARQUIVO.html /tmp/pn-ghp/NOME_DO_ARQUIVO.html
+git -C /tmp/pn-ghp add NOME_DO_ARQUIVO.html
+git -C /tmp/pn-ghp commit -m "Publica NOME_DO_ARQUIVO"
+git -C /tmp/pn-ghp push
+git worktree remove /tmp/pn-ghp</pre></div>
+  <p>O endereço será <code>https://pedromfnakashima.github.io/pn-0001/NOME_DO_ARQUIVO.html</code>. Use nomes sem espaços nem acentos (ex.: <code>analise_credores_2026.html</code>).</p>
+  <div class="callout warn"><b class="tag">Atenção</b>Não use <code>index.html</code> como destino, a menos que queira substituir a página principal. Não copie pastas inteiras para o <code>gh-pages</code>: copie só os arquivos HTML revisados.</div>
+</div></section>
+
+<!-- COMPARTILHAR -->
+<section id="compartilhar"><div class="wrap">
+  <h2>4. Compartilhar com terceiros</h2>
+  <div class="card">
+    <ol class="steps">
+      <li><b>Envie o link</b>
+        <code>https://pedromfnakashima.github.io/pn-0001/</code> funciona em qualquer navegador, no computador ou no celular, e não exige conta no GitHub. A página tem modo claro/escuro, gráficos interativos (passe o mouse ou toque) e tabelas que se expandem.</li>
+      <li><b>Contextualize na mensagem</b>
+        Sugestão de texto:
+        <div class="code"><button class="copy">Copiar</button><pre>Segue a análise das despesas do Governo de MS (jan/2015 a ago/2025),
+com base em dados do Portal da Transparência:
+https://pedromfnakashima.github.io/pn-0001/
+
+Valores nominais (sem correção pela inflação). A projeção de 2025 é
+estimada a partir de jan–ago. A seção "Qualidade dos dados" lista as
+limitações e os erros encontrados nos arquivos de origem.</pre></div></li>
+      <li><b>Avise quando atualizar</b>
+        O link continua o mesmo após cada atualização. Informe a data da nova versão (o cabeçalho da página mostra "gerado em …"; atualize essa data no HTML antes de publicar).</li>
+      <li><b>Se a pessoa precisar do arquivo</b>
+        Ela pode salvar a página pelo navegador (Ctrl+S, "Página completa") ou imprimir em PDF (Ctrl+P). O HTML é autocontido e funciona offline.</li>
+    </ol>
+  </div>
+  <div class="callout"><b class="tag">Alternativa privada</b>Se no futuro precisar compartilhar algo <b>só com pessoas específicas</b>, não use o GitHub Pages, que é sempre público nesta conta. Use um link privado (Artifact do claude.ai, Google Drive com acesso restrito ou envio do arquivo por e-mail).</div>
+</div></section>
+
+<!-- SEGURANÇA -->
+<section id="seguranca"><div class="wrap">
+  <h2>5. Cuidados antes de cada publicação</h2>
+  <div class="callout crit"><b class="tag">Público e permanente</b>Tudo o que vai para o GitHub Pages fica acessível a qualquer pessoa e pode ser indexado por buscadores ou arquivado (ex.: archive.org). Mesmo depois de apagada, uma versão antiga continua no histórico do branch <code>gh-pages</code>, que é público.</div>
+  <div class="card">
+    <ul class="check">
+      <li>A página <b>não contém nomes de servidores</b> nem dados da planilha <code>Consolidado - Desvio da media.xlsx</code> (dados pessoais por nome).</li>
+      <li>Pessoas físicas aparecem anonimizadas (como "Pessoa física A/B" na seção "Casos estranhos").</li>
+      <li>Menções a empresas em "Casos estranhos" mantêm a ressalva de que são sinais para investigação e não acusações.</li>
+      <li>Nenhum arquivo de <code>salvos/</code> (PDF, XLSX, PPTX) foi copiado para o <code>gh-pages</code>.</li>
+      <li><code>git -C /tmp/pn-ghp status --short</code> mostra apenas os arquivos HTML que você pretendia publicar.</li>
+      <li>A data "gerado em …" no cabeçalho foi atualizada.</li>
+      <li>Números novos foram conferidos com as planilhas de origem.</li>
+    </ul>
+  </div>
+  <div class="callout warn"><b class="tag">Nunca faça</b><code>git add .</code> ou <code>git add -A</code> no <code>main</code> deste projeto: isso incluiria <code>salvos/</code> (≈107 MB com dados pessoais) num repositório público. Se quiser versionar o projeto, adicione antes <code>salvos/</code> e <code>anotacoes/</code> ao <code>.gitignore</code>.</div>
+</div></section>
+
+<!-- DESPUBLICAR -->
+<section id="despublicar"><div class="wrap">
+  <h2>6. Despublicar ou tornar privado</h2>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Objetivo</th><th>Comando</th><th>Efeito</th></tr></thead>
+    <tbody>
+      <tr><td>Tirar o site do ar</td><td><code>gh api -X DELETE repos/pedromfnakashima/pn-0001/pages</code></td><td>O link para de funcionar em poucos minutos. O branch <code>gh-pages</code> continua no repositório.</td></tr>
+      <tr><td>Tornar o repositório privado</td><td><code>gh repo edit pedromfnakashima/pn-0001 --visibility private --accept-visibility-change-consequences</code></td><td>No plano gratuito, o GitHub Pages é <b>desativado</b> automaticamente.</td></tr>
+      <tr><td>Apagar também a página do histórico</td><td><code>git push origin --delete gh-pages</code></td><td>Remove o branch publicado. Cópias em cache de terceiros não são afetadas.</td></tr>
+      <tr><td>Reativar o site depois</td><td><code>gh api -X POST repos/pedromfnakashima/pn-0001/pages -f "source[branch]=gh-pages" -f "source[path]=/"</code></td><td>Exige o repositório público e o branch <code>gh-pages</code> existente.</td></tr>
+    </tbody>
+  </table></div></div>
+  <p>Também é possível fazer tudo pela interface web: <b>github.com/pedromfnakashima/pn-0001 → Settings → Pages</b> (fonte do site) e <b>Settings → General → Danger Zone</b> (visibilidade).</p>
+</div></section>
+
+<!-- PROBLEMAS -->
+<section id="problemas"><div class="wrap">
+  <h2>7. Problemas comuns</h2>
+
+  <details id="login"><summary>"You are not logged into any GitHub hosts" / refazer o login do gh</summary><div class="inner">
+    <p>Rode o login em um <b>terminal normal</b> (fora do Claude Code), para ver o código de uso único na tela:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>gh auth login -h github.com -p https -w
+gh auth setup-git</pre></div>
+    <p>O terminal mostra um código no formato <code>XXXX-XXXX</code> e copia esse código para a área de transferência. Abra <a href="https://github.com/login/device">github.com/login/device</a>, cole o código e autorize. O código <b>não</b> aparece no app do GitHub no celular, só no terminal. Se rodar dentro do Claude Code com <code>!</code>, o comando vai para segundo plano e o código fica escondido; peça ao Claude para ler a saída.</p>
+  </div></details>
+
+  <details><summary>"gh: comando não encontrado"</summary><div class="inner">
+    <p>O <code>gh</code> foi instalado em <code>~/.local/bin/gh</code>, sem sudo. Confira se essa pasta está no PATH:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>ls -l ~/.local/bin/gh
+echo $PATH | tr ':' '\n' | grep .local/bin</pre></div>
+    <p>Para atualizar o <code>gh</code>, baixe o <code>gh_X.Y.Z_linux_amd64.tar.gz</code> mais recente em <a href="https://github.com/cli/cli/releases">github.com/cli/cli/releases</a>, confira o checksum e copie <code>bin/gh</code> para <code>~/.local/bin/</code>.</p>
+  </div></details>
+
+  <details><summary>"fatal: '/tmp/pn-ghp' already exists" ao criar a worktree</summary><div class="inner">
+    <p>Sobrou uma pasta temporária de uma atualização anterior. Remova e tente de novo:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>git worktree remove --force /tmp/pn-ghp
+git worktree prune</pre></div>
+  </div></details>
+
+  <details><summary>O push foi rejeitado ("rejected", "non-fast-forward")</summary><div class="inner">
+    <p>O <code>gh-pages</code> remoto tem commits que a sua cópia não tem (ex.: alguém publicou de outro computador). Integre e reenvie:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>git -C /tmp/pn-ghp pull --rebase
+git -C /tmp/pn-ghp push</pre></div>
+  </div></details>
+
+  <details><summary>O site não mudou depois do push</summary><div class="inner">
+    <ul>
+      <li>Aguarde 1–2 minutos e confira o status do build com <code>gh api repos/pedromfnakashima/pn-0001/pages/builds/latest --jq .status</code>.</li>
+      <li>Recarregue sem cache (Ctrl+Shift+R). O CDN do GitHub pode manter a versão antiga por até ~10 minutos.</li>
+      <li>Confirme que o arquivo enviado é o novo: <code>git log -1 --stat origin/gh-pages</code>.</li>
+    </ul>
+  </div></details>
+
+  <details><summary>Status do build "errored"</summary><div class="inner">
+    <p>Na primeira publicação o status passou por "errored" e depois ficou "built" sozinho, o que é normal na ativação. Se persistir:</p>
+    <div class="code"><button class="copy">Copiar</button><pre>gh api repos/pedromfnakashima/pn-0001/pages/builds/latest --jq '.error.message'
+gh api -X POST repos/pedromfnakashima/pn-0001/pages/builds   <span class="c"># força um novo build</span></pre></div>
+    <p>Confira também se o <code>.nojekyll</code> continua no branch <code>gh-pages</code>.</p>
+  </div></details>
+</div></section>
+
+<footer><div class="wrap">
+  Arquivo: <code>resultados/guia_publicacao.html</code>. Complementa <code>resultados/analise_monitoramento.html</code>. Este guia é local e não está publicado; para publicá-lo também, siga a seção 3.
+</div></footer>
+
+<script>
+(function(){
+  const root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){const t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function label(){btn.textContent=cur()==='dark'?'☀ Claro':'☾ Escuro'}
+  try{const s=localStorage.getItem('theme');if(s)root.setAttribute('data-theme',s)}catch(e){}
+  label();
+  btn.addEventListener('click',()=>{const n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('theme',n)}catch(e){}label()});
+  document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+    const pre=b.nextElementSibling.cloneNode(true);pre.querySelectorAll('.c').forEach(c=>c.remove());
+    const txt=pre.textContent.replace(/[ \t]+$/gm,'');
+    const done=()=>{b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1500)};
+    if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done,()=>{});else done();
+  }));
+})();
+</script>
+</body>
+</html>

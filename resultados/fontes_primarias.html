@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fontes Primárias dos Dados</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --surface-2:#f0efeb; --border:#e2e0da;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7873; --accent:#2a78d6;
+  --code-bg:#1e1e1c; --code-text:#f0efec; --code-muted:#9a998f;
+  --s1:#2a78d6; --s2:#eb6834; --s1-soft:#9ec5f4; --grid:#e6e4de; --axis:#b9b7b0;
+  --warn-bg:#fff4dc; --warn-bd:#eda100; --crit-bg:#fde8e7; --crit-bd:#e34948; --info-bg:#e6f0fc; --info-bd:#2a78d6; --ok-bg:#e3f5ec; --ok-bd:#1baf7a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86; --accent:#3987e5;
+    --code-bg:#0d0d0c; --code-text:#f0efec; --code-muted:#8f8e86;
+    --s1:#3987e5; --s2:#d95926; --s1-soft:#184f95; --grid:#2c2b29; --axis:#55544f;
+    --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5; --ok-bg:#10281e; --ok-bd:#199e70;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33322f;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8e86; --accent:#3987e5;
+  --code-bg:#0d0d0c; --code-text:#f0efec; --code-muted:#8f8e86;
+  --s1:#3987e5; --s2:#d95926; --s1-soft:#184f95; --grid:#2c2b29; --axis:#55544f;
+  --warn-bg:#2e2410; --warn-bd:#c98500; --crit-bg:#331817; --crit-bd:#e66767; --info-bg:#14243a; --info-bd:#3987e5; --ok-bg:#10281e; --ok-bd:#199e70;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header.top{background:var(--surface);border-bottom:1px solid var(--border)}
+header.top .wrap{padding-top:36px;padding-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:30px;line-height:1.2;margin:6px 0 10px;letter-spacing:-.01em}
+h2{font-size:22px;margin:0 0 8px;letter-spacing:-.01em}
+h3{font-size:16px;margin:24px 0 8px}
+p{margin:0 0 12px}
+.lede{color:var(--text-2);max-width:820px}
+.sub{color:var(--text-2);max-width:820px;margin-bottom:18px}
+a{color:var(--accent);word-break:break-word}
+nav.toc{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px;scrollbar-width:none}
+nav.toc a{white-space:nowrap;color:var(--text-2);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px}
+nav.toc a:hover{background:var(--surface-2);color:var(--text)}
+.theme-btn{margin-left:auto;border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+section{padding:36px 0 4px;scroll-margin-top:48px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.card h4{margin:0 0 4px;font-size:15px}
+.cap{color:var(--muted);font-size:13px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}h1{font-size:24px}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:18px 0}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.kpi .v{font-size:24px;font-weight:650;letter-spacing:-.02em;margin-top:4px}
+.kpi .d{font-size:13px;color:var(--text-2)}
+.callout{border-left:4px solid var(--info-bd);background:var(--info-bg);border-radius:6px;padding:12px 16px;margin:12px 0}
+.callout.warn{border-color:var(--warn-bd);background:var(--warn-bg)}
+.callout.crit{border-color:var(--crit-bd);background:var(--crit-bg)}
+.callout.ok{border-color:var(--ok-bd);background:var(--ok-bg)}
+.callout b.tag{font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+thead th{background:var(--surface-2);color:var(--text-2);font-weight:600}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-word}
+.code{position:relative;margin:10px 0 16px}
+.code pre{margin:0;background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;overflow-x:auto;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+.code pre .c{color:var(--code-muted)}
+.copy{position:absolute;top:8px;right:8px;border:1px solid #444;background:#2b2b29;color:#ddd;border-radius:5px;font-size:11.5px;padding:3px 9px;cursor:pointer}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid var(--border);color:var(--text-2);background:var(--surface-2);white-space:nowrap}
+.pill.ok{border-color:var(--ok-bd);color:var(--text)}
+.pill.warn{border-color:var(--warn-bd);color:var(--text)}
+.pill.crit{border-color:var(--crit-bd);color:var(--text)}
+ol.find,ul.find{padding-left:20px;margin:0}
+ol.find li,ul.find li{margin-bottom:10px}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:stretch;margin:6px 0}
+.flow .box{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;position:relative}
+.flow .box b{display:block;font-size:13.5px;margin-bottom:2px}
+.flow .box span{color:var(--muted);font-size:12px}
+.flow .box:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+@media (max-width:760px){.flow{grid-template-columns:1fr}.flow .box:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px;transform:translateX(-50%)}}
+details{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+details summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";display:inline-block;width:16px;color:var(--muted);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .inner{padding:0 18px 14px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--text-2);font-size:11px;font-family:inherit}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .bl{stroke:var(--axis);stroke-width:1}
+.chart .lbl{fill:var(--text);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--text-2);margin:4px 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.15);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;opacity:0;transition:opacity .08s;z-index:20;min-width:170px;font-variant-numeric:tabular-nums}
+.tip .h{font-weight:650;margin-bottom:3px}
+.tip .r{display:flex;justify-content:space-between;gap:12px}
+footer{color:var(--muted);font-size:12.5px;padding:32px 0 48px}
+ol.refs{padding-left:22px;font-size:13.5px}
+ol.refs li{margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Pesquisa de fontes · salvos/monitoramento · 13/10/2026</div>
+  <h1>Fontes primárias dos dados de despesas e pessoal de MS</h1>
+  <p class="lede">Rastreamento da origem dos dados usados nos estudos da pasta <code>salvos/monitoramento</code>. A pesquisa partiu do Portal da Transparência do Governo de Mato Grosso do Sul e foi complementada por fontes oficiais de referência (Tesouro Nacional, Banco Central e atos do governo estadual). Os valores do estudo foram <b>conciliados com a fonte original</b> por amostragem.</p>
+</div></header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#resumo">Resumo</a>
+  <a href="#mapa">Mapa das fontes</a>
+  <a href="#portal">Portal da Transparência</a>
+  <a href="#dados">Dados abertos (CKAN)</a>
+  <a href="#conciliacao">Conciliação</a>
+  <a href="#achados">Achados e correções</a>
+  <a href="#rgf">RGF / LRF</a>
+  <a href="#contexto">Contexto legal</a>
+  <a href="#reproduzir">Como reproduzir</a>
+  <a href="#refs">Referências</a>
+  <button class="theme-btn" id="themeBtn" type="button">Tema</button>
+</div></nav>
+
+<!-- RESUMO -->
+<section id="resumo"><div class="wrap">
+  <h2>Resumo</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="l">Fonte dos credores</div><div class="v">SEFAZ-MS</div><div class="d">"Despesas por Credor – Mensal", coluna <b>Pago</b></div></div>
+    <div class="kpi"><div class="l">Fonte da folha</div><div class="v">SAD-MS</div><div class="d">"Folha de Pagamento", coluna <b>REM. Após Deduções Obrigatórias</b></div></div>
+    <div class="kpi"><div class="l">Conciliação</div><div class="v">Ao centavo</div><div class="d">em ago/2025 (folha) e nos credores testados de 2015</div></div>
+    <div class="kpi"><div class="l">Novo achado</div><div class="v">Sem 13º</div><div class="d">a folha do estudo não inclui o 13º salário (≈7–8% ao ano)</div></div>
+  </div>
+  <div class="card"><ol class="find">
+    <li><b>As duas bases do estudo foram identificadas e conferidas.</b> Os dados de credores vêm do conjunto <i>Despesas por Credor – Mensal</i> (SEFAZ) e os de pessoal, do conjunto <i>Folha de Pagamento</i> (SAD). Ambos estão no portal de dados abertos do Estado (<a href="https://www.dados.ms.gov.br/">dados.ms.gov.br</a>), que é linkado pelo Portal da Transparência. As duas bases alimentam as consultas do <a href="https://www.transparencia.ms.gov.br/">Portal da Transparência</a>.</li>
+    <li><b>Os valores de credores são os efetivamente pagos</b> (coluna "Pago"), e não os empenhados ou liquidados. A fonte informa que os pagamentos são "deduzidos, quando for o caso, impostos e contribuições".</li>
+    <li><b>O campo de folha foi confirmado</b> pela definição oficial: "Remuneração Após Deduções Obrigatórias" é a remuneração descontados o <b>teto constitucional</b> e as deduções obrigatórias. É, portanto, um valor líquido.</li>
+    <li><b>O 13º salário não está na folha do estudo.</b> De 2018 a 2022 a fonte publica o 13º num arquivo separado ("13/AAAA"), que não foi somado: R$ 344,7 mi em 2018 e R$ 479,9 mi em 2022. A partir de 2023, o 13º não aparece nos arquivos mensais publicados.</li>
+    <li><b>A "cobertura suspeita" de 2015–2016 vem da própria fonte.</b> Nesses anos os pagamentos a pessoas físicas aparecem agregados em rótulos genéricos (VENCIMENTOS, DIÁRIAS, PASEP…) com CPF mascarado.</li>
+    <li><b>As páginas de download de Dados Abertos do Portal da Transparência estavam com erro de servidor</b> em 13/10/2026. Os mesmos dados continuam acessíveis em dados.ms.gov.br.</li>
+  </ol></div>
+</div></section>
+
+<!-- MAPA -->
+<section id="mapa"><div class="wrap">
+  <h2>Mapa: arquivo do estudo → fonte primária</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="box"><b>Órgãos gestores</b><span>SEFAZ-MS (despesas) · SAD-MS (folha)</span></div>
+      <div class="box"><b>Sistemas do Estado</b><span>APIs <code>transpdespesas</code> e <code>transpfolhadepagamento</code> (gw.sgi.ms.gov.br)</span></div>
+      <div class="box"><b>Publicação</b><span>Portal da Transparência + dados.ms.gov.br (CSV mensal, CC-BY)</span></div>
+      <div class="box"><b>Estudo</b><span>Tabelas dinâmicas em XLSX → gráficos PPTX → PDFs</span></div>
+    </div>
+  </div>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Arquivo do estudo</th><th>Fonte primária</th><th>Coluna / medida</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td>Gov unificada com totais.xlsx · PDFs e PPTX de credores</td><td><a href="https://www.dados.ms.gov.br/dataset/despesas-por-credor-mensal">Despesas por Credor – Mensal</a> (SEFAZ), 01/2012 a 08/2026</td><td><code>Credor</code>, <code>Pago</code>, agregados por ano</td><td><span class="pill ok">Confirmada</span></td></tr>
+      <tr><td>Orgaos MS.xlsx · PDFs de 128 e 123 p.</td><td><a href="https://www.dados.ms.gov.br/dataset/folha-de-pagamento">Folha de Pagamento</a> (SAD), 01/2018 a 08/2026</td><td><code>Órgão</code>, <code>Situação</code>, <code>REM. Após Deduções Obrigatórias</code></td><td><span class="pill ok">Confirmada</span> 2018+ · <span class="pill warn">2015–2017 não publicados no CKAN</span></td></tr>
+      <tr><td>Filtro Categorias.xlsx · Contagem funcionarios por categoriia.xlsx · PDF de 853 p.</td><td>Mesma Folha de Pagamento (SAD)</td><td><code>Cargo</code> = "categoria"</td><td><span class="pill ok">Confirmada</span> (197 cargos em 08/2025 = 197 categorias)</td></tr>
+      <tr><td>Consolidado - Desvio da media.xlsx</td><td>Mesma Folha de Pagamento (SAD)</td><td><code>Nome (Nome Social)</code> × mês</td><td><span class="pill ok">Compatível</span> (a fonte tem nome, CPF parcial e matrícula; o estudo agregou por nome)</td></tr>
+      <tr><td>Projeções e comparações com inflação</td><td><a href="https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados?formato=json">BCB/SGS série 433</a> (IPCA, IBGE)</td><td>Variação mensal %</td><td><span class="pill ok">Valores aproximados confirmados</span></td></tr>
+    </tbody>
+  </table></div></div>
+</div></section>
+
+<!-- PORTAL -->
+<section id="portal"><div class="wrap">
+  <h2>Portal da Transparência de MS</h2>
+  <p class="sub"><a href="https://www.transparencia.ms.gov.br/">www.transparencia.ms.gov.br</a>, mantido pela CGE-MS. É uma aplicação AngularJS: as telas consultam APIs no gateway <code>https://gw.sgi.ms.gov.br</code>. O mapeamento abaixo foi feito a partir do código público da própria página.</p>
+
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Seção / rota</th><th>API (gateway)</th><th>Conteúdo</th><th>Relevância</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://www.transparencia.ms.gov.br/#/Servidores">#/Servidores</a></td><td><code>/d0125/transpfolhadepagamento/v1</code> → <code>servidores</code>, <code>orgaos</code>, <code>cargos</code>, <code>vinculos</code>, <code>situacoes</code>, <code>exercicios</code></td><td>Remuneração por servidor, filtros por exercício, mês, órgão, cargo, vínculo, situação e tipo de folha (NORMAL / COMPLEMENTAR)</td><td>Folha (estudos 2 e 3)</td></tr>
+      <tr><td><a href="https://www.transparencia.ms.gov.br/#/TabelaRemuneratoria">#/TabelaRemuneratoria</a></td><td>mesma API → <code>carreiras</code>, <code>cargosRemuneratorio</code>, <code>niveis</code></td><td>Tabelas salariais por carreira e nível</td><td>Útil para validar a remuneração média por cargo</td></tr>
+      <tr><td><a href="https://www.transparencia.ms.gov.br/#/Despesa">#/Despesa</a></td><td><code>/d0146/transpdespesas/v1</code></td><td>Despesas por órgão, por credor, por órgão e credor, detalhe de empenho (exporta CSV)</td><td>Credores (estudo 1)</td></tr>
+      <tr><td>#/DadosAbertosDespesaPorCredor</td><td><code>/d0146/transpdespesas/v1/DadosAbertosDespesaPorCredor</code></td><td>Download por exercício e mês</td><td><span class="pill crit">Fora do ar</span></td></tr>
+      <tr><td>#/DadosAbertosServidores</td><td><code>/d0125/transpfolhadepagamento/v1/DadosAbertosServidores</code></td><td>Download da folha por exercício e mês</td><td><span class="pill crit">Fora do ar</span></td></tr>
+      <tr><td>#/DadosAbertosDespesas</td><td><code>/d0146/transpdespesas/v1/DadosAbertosDespesas</code></td><td>Despesas consolidadas</td><td><span class="pill crit">Fora do ar</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout crit"><b class="tag">Indisponível em 13/10/2026</b>As rotas <code>/DadosAbertos?id=dspc</code>, <code>?id=ser</code>, <code>?id=dsp</code> e <code>?id=rsm</code> retornam <i>Server Error</i> ("A exibição parcial 'MenuEsquerdoDadosAbertos' não foi encontrada"). As APIs do gateway exigem um token emitido para o próprio portal (HTTP 401 em acesso direto) e não foram contornadas. Use <a href="#dados">dados.ms.gov.br</a>, que publica os mesmos conjuntos.</div></div>
+</div></section>
+
+<!-- CKAN -->
+<section id="dados"><div class="wrap">
+  <h2>Portal de dados abertos: dados.ms.gov.br</h2>
+  <p class="sub">Plataforma CKAN do Governo de MS, com API pública (<code>/api/3/action/…</code>) e licença Creative Commons Atribuição. É linkada no rodapé do Portal da Transparência. Os três conjuntos abaixo cobrem tudo o que os estudos usaram.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Despesas por Credor – Mensal</h4>
+      <div class="cap">Autor: Governo de MS / SEFAZ · tel. (67) 3318-3313 / 3214 · 176 arquivos CSV, 01/2012 a 08/2026 · atualizado em 15/09/2026</div>
+      <p><a href="https://www.dados.ms.gov.br/dataset/despesas-por-credor-mensal">dados.ms.gov.br/dataset/despesas-por-credor-mensal</a></p>
+      <p><i>"Gastos mensais por Credor realizados pelos órgãos e entidades estaduais em decorrência dos pagamentos para servidores públicos e fornecedores de materiais, serviços e obras, deduzidos, quando for o caso, impostos e contribuições exigidos pela legislação."</i></p>
+      <p><b>Colunas:</b> Orgão · Natureza de Despesa · Programa · Função · Sub-Função · Ação · Categoria · Grupo de Despesa · Modalidade · Elemento de Despesa · Cpf/Cnpj · Credor · Documento · Tipo de Licitação · <b>Empenhado · Liquidado · Pago</b></p>
+    </div>
+    <div class="card">
+      <h4>Folha de Pagamento</h4>
+      <div class="cap">Autor: Governo de MS / SAD · tel. (67) 3318-8017 · 109 arquivos CSV, 01/2018 a 08/2026 (inclui "13/2018" a "13/2022") · atualizado em 15/09/2026</div>
+      <p><a href="https://www.dados.ms.gov.br/dataset/folha-de-pagamento">dados.ms.gov.br/dataset/folha-de-pagamento</a></p>
+      <p><b>Colunas:</b> Competência · Órgão · Situação · Nome (Nome Social) · Cpf · Cargo · Rem. Base · Outras Verbas · <b>REM. Após Deduções Obrigatórias</b> · Vínculo · Matrícula</p>
+      <p>Base legal citada: Lei federal 12.527/2011 (LAI) e Lei estadual 4.416/2013, alterada pela Lei 4.720/2015.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Definições oficiais da folha (texto do conjunto de dados)</h4>
+    <ul class="find">
+      <li><b>Remuneração Base:</b> subsídio, vencimento ou soldo, acrescidos das vantagens pecuniárias pessoais, das vantagens inerentes ao cargo e das percebidas em caráter permanente.</li>
+      <li><b>Outras Verbas:</b> acertos de meses e exercícios anteriores, decisões judiciais, gratificação natalina, adicional de férias e verbas indenizatórias.</li>
+      <li><b>Remuneração Após Deduções Obrigatórias:</b> "valor da remuneração, descontadas a dedução do teto constitucional e as deduções obrigatórias".</li>
+      <li>Excluídas: pensão alimentícia, empréstimos, planos de saúde e similares.</li>
+      <li>Abrangência: servidores ativos e inativos, empregados públicos e pensionistas da administração direta e indireta do <b>Poder Executivo</b>.</li>
+    </ul>
+    <p class="cap">Valores de "Situação" observados: ATIVO · INATIVO – APOSENTADO · INATIVO – PENSÃO POR MORTE. Vínculos em 08/2025: estatutário (66.602), magistério convocado (15.007), comissionado regime geral (2.821), contrato público (2.370), reserva ativa (609), bolsista (377), AGEPREV (303), entre outros.</p>
+  </div>
+
+  <div class="card">
+    <h4>Despesas – Anual (complementar)</h4>
+    <p class="cap">SEFAZ · 2018 a 2026 · colunas Unidade Gestora, Orgão, Empenhado, Liquidado, Pago (61 linhas em 2024) · <a href="https://www.dados.ms.gov.br/dataset/despesas-anual">dados.ms.gov.br/dataset/despesas-anual</a></p>
+    <p>Serve para conferir totais anuais por órgão, mas não traz credor.</p>
+  </div>
+</div></section>
+
+<!-- CONCILIAÇÃO -->
+<section id="conciliacao"><div class="wrap">
+  <h2>Conciliação: estudo × fonte oficial</h2>
+  <p class="sub">Os números das planilhas do estudo foram comparados com a soma calculada a partir dos CSVs oficiais. Para a folha, somou-se só a coluna de valor; nomes e CPFs não foram armazenados.</p>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Item</th><th class="n">Estudo (R$)</th><th class="n">Fonte oficial (R$)</th><th class="n">Diferença</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>Energisa MS, 2015 (Pago)</td><td class="n">23.056.689,38</td><td class="n">23.056.689,38</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Águas Guariroba, 2015 (Pago)</td><td class="n">32.301.116,98</td><td class="n">32.301.116,98</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Digithobrasil, 2015 (Pago)</td><td class="n">59.929.235,56</td><td class="n">59.929.235,56</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Inovvati, 2015 (Pago)</td><td class="n">52.412.134,73</td><td class="n">52.412.134,73</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Total geral 2015 (todos os credores)</td><td class="n">12.092.666.122,60</td><td class="n">12.052.912.718,53</td><td class="n">+39,75 mi (0,33%)</td><td><span class="pill warn">Próximo</span> provável revisão posterior da base ou extração pelo portal</td></tr>
+      <tr><td>Credores distintos 2015</td><td class="n">4.731</td><td class="n">4.798</td><td class="n">−67</td><td><span class="pill warn">Próximo</span> (normalização de nomes)</td></tr>
+      <tr><td>Folha jan/2018</td><td class="n">343.128.003,66</td><td class="n">343.128.777,40</td><td class="n">−773,74</td><td><span class="pill ok">Praticamente idêntico</span></td></tr>
+      <tr><td>Folha dez/2018</td><td class="n">421.834.045,19</td><td class="n">421.386.279,65</td><td class="n">+0,45 mi (0,1%)</td><td><span class="pill ok">Próximo</span></td></tr>
+      <tr><td>Folha "13/2018" (13º salário)</td><td class="n">—</td><td class="n">344.676.427,83</td><td class="n">não incluído</td><td><span class="pill crit">Ausente no estudo</span></td></tr>
+      <tr><td>Folha dez/2022</td><td class="n">575.575.563,40</td><td class="n">575.575.563,40</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Folha "13/2022" (13º salário)</td><td class="n">—</td><td class="n">479.900.240,60</td><td class="n">não incluído</td><td><span class="pill crit">Ausente no estudo</span></td></tr>
+      <tr><td>Folha dez/2024</td><td class="n">748.605.214,65</td><td class="n">748.605.214,65</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Folha ago/2025</td><td class="n">683.243.507,42</td><td class="n">683.243.507,42</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>Cargos distintos ago/2025</td><td class="n">197 categorias</td><td class="n">197 cargos</td><td class="n">0</td><td><span class="pill ok">Idêntico</span></td></tr>
+      <tr><td>PROFESSOR, servidores ago/2025</td><td class="n">18.840 (média jan–ago)</td><td class="n">18.836 (ago)</td><td class="n">—</td><td><span class="pill ok">Coerente</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note cap">Composição oficial de jan/2018: ativos R$ 183,6 mi · aposentados R$ 138,3 mi · pensão por morte R$ 21,2 mi. Isso confirma que a aba "Ativos – Inativos" do estudo usa a coluna <code>Situação</code>.</p></div>
+</div></section>
+
+<!-- ACHADOS -->
+<section id="achados"><div class="wrap">
+  <h2>Achados novos e correções à análise anterior</h2>
+  <p class="sub">O que a consulta às fontes primárias muda na <a href="analise_monitoramento.html">análise de monitoramento</a> (o arquivo foi mantido sem alterações).</p>
+
+  <div class="card">
+    <h4>1. A folha do estudo exclui o 13º salário</h4>
+    <div class="cap">Arquivos mensais oficiais por competência (R$ milhões, REM. após deduções)</div>
+    <div class="legend"><span><i style="background:var(--s1)"></i>Folhas mensais 01–12 (usadas no estudo)</span><span><i style="background:var(--s2)"></i>Arquivo "13" (13º salário, fora do estudo)</span></div>
+    <div id="ch-13"></div>
+    <ul class="find">
+      <li>De 2018 a 2022, o 13º está num arquivo próprio ("13/AAAA", competência "12/AAAA (13º)"), e o estudo não o somou. O efeito é de <b>+7,4% em 2018</b> (R$ 344,7 mi) e <b>+7,9% em 2022</b> (R$ 479,9 mi) sobre o total anual.</li>
+      <li>De 2023 em diante, não há arquivo "13" e o 13º não aparece em nenhum mês: dez/2023 fica só R$ 50,6 mi acima de nov/2023. Ou seja, <b>o 13º deixou de ser publicado nesse conjunto</b>.</li>
+      <li><b>Correção:</b> a análise anterior atribuía o excesso de dezembro e o viés da projeção ×1,5 ao 13º. O excesso de dezembro é real, mas vem de outras verbas (férias, acertos, retroativos), porque o 13º não está nos dados. Em particular, o <b>dez/2024 atípico (R$ 748,6 mi) não é o 13º</b>.</li>
+      <li>Como o tratamento é o mesmo em todos os anos (sempre sem 13º), as <b>taxas de crescimento</b> do estudo continuam comparáveis. O que fica subestimado é o <b>nível</b> da folha anual.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>2. Credores: valores pagos, líquidos de retenções</h4>
+    <ul class="find">
+      <li>Os valores por credor coincidem com a coluna <code>Pago</code>, e não com Empenhado ou Liquidado. Em 2015, os totais da fonte são Empenhado R$ 12,71 bi, Liquidado R$ 12,22 bi e Pago R$ 12,05 bi.</li>
+      <li>A fonte declara que os valores são "deduzidos, quando for o caso, impostos e contribuições". Por isso rubricas como "IRRF DE SERVIDORES" e "VENCIMENTOS" aparecem como credores: são os fluxos de pagamento da folha e das retenções dentro da execução financeira.</li>
+      <li>A seleção dos "404 credores privados" foi feita pelo autor do estudo. A fonte não classifica credores como públicos ou privados.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>3. A baixa cobertura de 2015–2016 é da fonte, não do estudo</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Mês</th><th class="n">Linhas</th><th class="n">Credores distintos</th><th>Pessoas físicas</th></tr></thead>
+      <tbody>
+        <tr><td>06/2014</td><td class="n">6.897</td><td class="n">1.877</td><td>CPF completo (635 linhas)</td></tr>
+        <tr><td>06/2015</td><td class="n">8.455</td><td class="n">2.171</td><td>1.028 linhas com CPF mascarado "PF.999.999-9", agregadas em VENCIMENTOS, DIÁRIAS, PASEP, BOLSA AUXÍLIO…</td></tr>
+        <tr><td>06/2016</td><td class="n">11.222</td><td class="n">2.054</td><td>mesmo padrão de agregação</td></tr>
+        <tr><td>06/2017</td><td class="n">16.057</td><td class="n">6.170</td><td>pessoas físicas individualizadas (1.366 linhas)</td></tr>
+        <tr><td>06/2024</td><td class="n">26.735</td><td class="n">9.603</td><td>pessoas físicas individualizadas (3.061 linhas)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Conclusão: os anos 2015–2016 não são comparáveis em número de credores e na mediana por credor. Os totais em R$ são comparáveis, com a ressalva das rubricas que mudam de classificação.</p>
+  </div>
+
+  <div class="card">
+    <h4>4. Outras observações sobre a fonte</h4>
+    <ul class="find">
+      <li><b>Formato numérico inconsistente:</b> os dumps antigos (2015) usam espaço como separador decimal ("15000 00"). Os CSVs recentes usam ponto e vírgula como delimitador e UTF-8 com BOM. Quem reprocessar precisa tratar os dois formatos.</li>
+      <li><b>Folha de 2015 a 2017:</b> o conjunto em dados.ms.gov.br começa em 01/2018. Os meses de 2015–2017 usados no estudo devem ter vindo da consulta interativa do Portal da Transparência (#/Servidores), que tem seletor de exercício, ou da versão anterior do portal. <span class="pill warn">Não verificado</span>: a API exige token.</li>
+      <li><b>Teto constitucional:</b> os valores de referência corretos (subsídio de ministro do STF) são R$ 41.650,92 (desde abr/2023), R$ 44.008,52 (fev/2024) e R$ 46.366,19 (fev/2025, vigente em 2026). O valor "R$ 41.845,49" citado na análise anterior <b>não corresponde</b> a nenhum desses e deve ser desconsiderado.</li>
+      <li><b>IPCA confirmado</b> pela série oficial (BCB/SGS 433): 2015 10,67% · 2016 6,29% · 2017 2,95% · 2018 3,75% · 2019 4,31% · 2020 4,52% · 2021 10,06% · 2022 5,78% · 2023 4,62% · 2024 4,83% · 2025 (jan–ago) 3,15%. Acumulado 2015–2024: <b>74,90%</b>. Acumulado 2016–2024: <b>58,03%</b>. Os valores "aproximados" do relatório estavam corretos; o único ajuste é 2022, que é 5,78% e não 5,79%.</li>
+    </ul>
+  </div>
+</div></section>
+
+<!-- RGF -->
+<section id="rgf"><div class="wrap">
+  <h2>Referência oficial: despesa com pessoal na LRF (RGF)</h2>
+  <p class="sub">O Relatório de Gestão Fiscal do Poder Executivo de MS (Anexo 1, 3º quadrimestre), obtido na API do SICONFI/Tesouro Nacional, é a medida legal da despesa com pessoal. O estudo usa a folha <b>líquida</b>, que é diferente e menor.</p>
+  <div class="card">
+    <h4>Despesa total com pessoal (DTP) / RCL ajustada — Poder Executivo de MS</h4>
+    <div class="cap">% · linhas tracejadas = limites da LRF: alerta 44,1% · prudencial 46,55% · máximo 49%</div>
+    <div id="ch-rgf"></div>
+  </div>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Ano</th><th class="n">Despesa bruta c/ pessoal</th><th class="n">Ativos</th><th class="n">Inativos e pensionistas</th><th class="n">DTP</th><th class="n">RCL ajustada</th><th class="n">DTP/RCL</th><th class="n">Folha líquida do estudo</th></tr></thead>
+    <tbody>
+      <tr><td>2015</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">3.813,8</td><td class="n">–</td><td class="n">45,83%</td><td class="n">3.596,3</td></tr>
+      <tr><td>2016</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">4.033,3</td><td class="n">–</td><td class="n">43,15%</td><td class="n">4.089,2</td></tr>
+      <tr><td>2017</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">4.775,2</td><td class="n">9.747,3</td><td class="n">48,99%</td><td class="n">4.325,7</td></tr>
+      <tr><td>2018</td><td class="n">7.385,6</td><td class="n">4.949,2</td><td class="n">2.436,3</td><td class="n">5.068,5</td><td class="n">10.733,4</td><td class="n">47,22%</td><td class="n">4.672,6</td></tr>
+      <tr><td>2019</td><td class="n">8.723,4</td><td class="n">5.891,1</td><td class="n">2.832,3</td><td class="n">5.652,5</td><td class="n">12.005,9</td><td class="n">47,08%</td><td class="n">4.792,6</td></tr>
+      <tr><td>2020</td><td class="n">8.789,0</td><td class="n">5.622,8</td><td class="n">3.166,2</td><td class="n">5.890,6</td><td class="n">14.069,6</td><td class="n">41,87%</td><td class="n">4.917,8</td></tr>
+      <tr><td>2021</td><td class="n">9.602,0</td><td class="n">6.045,7</td><td class="n">3.556,3</td><td class="n">6.416,2</td><td class="n">15.797,1</td><td class="n">40,62%</td><td class="n">5.048,9</td></tr>
+      <tr><td>2022</td><td class="n">10.613,1</td><td class="n">6.864,8</td><td class="n">3.748,3</td><td class="n">7.181,0</td><td class="n">18.352,7</td><td class="n">39,13%</td><td class="n">6.055,3</td></tr>
+      <tr><td>2023</td><td class="n">11.483,2</td><td class="n">7.250,8</td><td class="n">4.120,9</td><td class="n">8.786,1</td><td class="n">19.683,0</td><td class="n">44,64%</td><td class="n">6.660,9</td></tr>
+      <tr><td>2024</td><td class="n">11.909,0</td><td class="n">7.406,8</td><td class="n">4.360,5</td><td class="n">9.153,7</td><td class="n">20.253,1</td><td class="n">45,20%</td><td class="n">7.453,9</td></tr>
+      <tr><td>2025</td><td class="n">12.874,9</td><td class="n">8.273,8</td><td class="n">4.448,2</td><td class="n">9.772,2</td><td class="n">22.108,7</td><td class="n">44,20%</td><td class="n">5.247,2 (jan–ago)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">R$ milhões nominais. Fonte: <a href="https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2024&in_periodicidade=Q&nr_periodo=3&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=E&co_poder=E&id_ente=50">SICONFI – RGF Anexo 01, Estado de MS (id_ente 50), Poder Executivo, 3º quadrimestre</a>. Em 2015–2017 o anexo tinha leiaute diferente, sem a abertura bruta por ativos e inativos.</p>
+  <ul class="find">
+    <li>A folha líquida do estudo equivale a <b>≈63% da despesa bruta com pessoal</b> do RGF (63,3% em 2018 e 62,6% em 2024). A diferença inclui o 13º, IR e contribuições retidos, encargos patronais e outras despesas de pessoal.</li>
+    <li>Ativos: o estudo captura ≈57% do bruto do RGF (2024). Inativos: ≈75%, menos descontos por ser majoritariamente remuneração.</li>
+    <li>O Executivo ficou <b>acima do limite de alerta (44,1%)</b> em 2015, 2017, 2018, 2019, 2023, 2024 e 2025, e acima do <b>prudencial (46,55%)</b> em 2017–2019, chegando a 48,99% em 2017. A folga de 2020–2022 veio do crescimento da RCL, não da contenção da folha.</li>
+  </ul></div>
+</div></section>
+
+<!-- CONTEXTO -->
+<section id="contexto"><div class="wrap">
+  <h2>Contexto legal que explica as quebras das séries</h2>
+  <div class="card"><div class="tbl"><table>
+    <thead><tr><th>Evento</th><th>O que diz a fonte</th><th>Hipótese do estudo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Reajuste geral de 10%</b> a partir de jan/2022</td><td>Lei publicada no DOE-MS de 02/12/2021. Abrange efetivos, comissionados e empregados públicos e é estendida a aposentados e pensionistas; ≈81 mil servidores do Executivo. O Sindifisco cita, para janeiro, R$ 486,5 mi somando reajuste e reestruturação de carreiras. (<a href="https://www.agepen.ms.gov.br/reajuste-geral-de-10-e-sancionado-e-servidores-terao-ganho-salarial-a-partir-de-janeiro-de-2022">AGEPEN-MS</a>, <a href="https://www.sindifisco-ms.org.br/com-novo-reajuste-salario-de-servidores-estaduais-ja-esta-na-conta/">Sindifisco-MS</a>)</td><td><span class="pill ok">Confirmada</span> o salto de 2022 (+19,9%)</td></tr>
+      <tr><td><b>LC federal 173/2020</b></td><td>Vedou reajustes a servidores até 31/12/2021 (art. 8º). O STF julgou a lei constitucional em mar/2021. Em 2021, MS não concedeu reajuste por esse motivo. (<a href="https://www.correiobraziliense.com.br/economia/2021/03/amp/4911968-stf-mantem-lei-que-proibe-reajuste-para-servidores-ate-dezembro.html">Correio Braziliense</a>, <a href="https://www.campograndenews.com.br/politica/governo-conclui-estudos-e-reajuste-dos-servidores-e-previsto-para-janeiro">Campo Grande News</a>)</td><td><span class="pill ok">Confirmada</span> a estagnação de 2019–2021</td></tr>
+      <tr><td><b>Contribuição previdenciária de 14%</b></td><td>Alíquota elevada de 11% para 14% na reforma estadual de 2017. A LC estadual 274 (mai/2020) estendeu a reforma, com cobrança de inativos sobre a parcela acima do salário mínimo. (<a href="https://www.sindifisco-ms.org.br/aposentadoria-para-servidores-publicos-estaduais-do-ms/">Sindifisco-MS</a>, <a href="https://www.campograndenews.com.br/politica/governo-propoe-aliquotas-maiores-para-diminuir-rombo-na-previdencia">Campo Grande News</a>)</td><td><span class="pill warn">Parcialmente apoiada</span> a queda líquida das aposentadorias em jan/2021 é compatível, mas a data exata de início da cobrança não foi confirmada</td></tr>
+      <tr><td><b>Teto constitucional</b></td><td>Subsídio de ministro do STF: R$ 41.650,92 (abr/2023), R$ 44.008,52 (fev/2024), R$ 46.366,19 (fev/2025). A REM. após deduções já desconta o abate-teto. (<a href="https://brasil61.com/n/remuneracao-de-ministros-do-stf-e-pgr-sera-de-r-46-3-mil-em-2025-mais-de-35-vezes-o-salario-minimo-atual-bras237696">Brasil 61</a>)</td><td><span class="pill warn">Corrigir</span> o valor de referência usado</td></tr>
+    </tbody>
+  </table></div></div>
+</div></section>
+
+<!-- REPRODUZIR -->
+<section id="reproduzir"><div class="wrap">
+  <h2>Como reproduzir e atualizar os dados</h2>
+  <details open><summary>Listar e baixar os arquivos oficiais (API CKAN)</summary><div class="inner">
+    <div class="code"><button class="copy">Copiar</button><pre><span class="c"># metadados e lista de arquivos de cada conjunto</span>
+curl -s "https://www.dados.ms.gov.br/api/3/action/package_show?id=despesas-por-credor-mensal" \
+  | python3 -c "import json,sys; [print(r['name'], r['url']) for r in json.load(sys.stdin)['result']['resources']]"
+
+curl -s "https://www.dados.ms.gov.br/api/3/action/package_show?id=folha-de-pagamento" \
+  | python3 -c "import json,sys; [print(r['name'], r['url']) for r in json.load(sys.stdin)['result']['resources']]"
+
+<span class="c"># exemplo: baixar um mês (CSV ; UTF-8 com BOM)</span>
+curl -L -o despesas-08_2025.csv "https://www.dados.ms.gov.br/dataset/4de59cf4-98b8-447e-a911-c203de8d8d4c/resource/97e59f1e-2c5b-4b7d-90b4-55bf1b3378f4/download/despesas-08_2025.csv"</pre></div>
+    <p class="cap">Os meses antigos (ex.: 2015) são servidos como <code>/datastore/dump/despesas-MM_AAAA</code>, em CSV com vírgula e decimais separados por espaço.</p>
+  </div></details>
+  <details><summary>Somar "Pago" por credor e ano (Python)</summary><div class="inner">
+    <div class="code"><button class="copy">Copiar</button><pre>import csv, io, re, glob
+def valor(s):
+    s = (s or "").strip()
+    if "," in s: s = s.replace(".", "").replace(",", ".")
+    s = re.sub(r"\s+(\d{2})$", r".\1", s).replace(" ", "")   <span class="c"># "15000 00" -> 15000.00</span>
+    return float(s or 0)
+tot = {}
+for f in glob.glob("despesas-*_2024.csv"):
+    txt = open(f, encoding="utf-8-sig").read()
+    sep = ";" if txt.split("\n")[0].count(";") else ","
+    for r in csv.DictReader(io.StringIO(txt), delimiter=sep):
+        k = " ".join(r["Credor"].split())                       <span class="c"># normaliza espaços</span>
+        tot[k] = tot.get(k, 0) + valor(r["Pago"])
+for k, v in sorted(tot.items(), key=lambda x: -x[1])[:20]: print(f"{v:>18,.2f}  {k}")</pre></div>
+  </div></details>
+  <details><summary>Incluir o 13º na folha anual</summary><div class="inner">
+    <p>Para 2018–2022, some também o arquivo <code>Folha de Pagamento - 13/AAAA</code>. Para 2023 em diante, o 13º não está publicado nesse conjunto: use o RGF (despesa bruta) ou faça um pedido via LAI (<a href="https://www.ms.gov.br/comunicacao-e-transparencia/registrar-pedido-de-acesso-a-informacao105/">registrar pedido de acesso à informação</a>).</p>
+  </div></details>
+  <details><summary>IPCA oficial e RGF via API</summary><div class="inner">
+    <div class="code"><button class="copy">Copiar</button><pre><span class="c"># IPCA mensal (IBGE, via Banco Central – série 433)</span>
+curl -s "https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados?formato=json&dataInicial=01/01/2015&dataFinal=31/12/2025"
+
+<span class="c"># RGF Anexo 1 – Poder Executivo de MS – 3º quadrimestre de 2024</span>
+curl -s "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2024&in_periodicidade=Q&nr_periodo=3&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=E&co_poder=E&id_ente=50"</pre></div>
+  </div></details>
+  <div class="callout warn"><b class="tag">Dados pessoais</b>Os CSVs da folha trazem nome, CPF parcial e matrícula de cada servidor. Mesmo sendo públicos por força da LAI, não os republique de forma individualizada; trabalhe com agregados, como já feito nos relatórios.</div>
+</div></section>
+
+<!-- REFS -->
+<section id="refs"><div class="wrap">
+  <h2>Referências</h2>
+  <div class="card">
+    <h4>Fontes primárias (oficiais)</h4>
+    <ol class="refs">
+      <li>Portal da Transparência do Governo de MS — <a href="https://www.transparencia.ms.gov.br/">https://www.transparencia.ms.gov.br/</a> (seções #/Servidores, #/Despesa, #/TabelaRemuneratoria)</li>
+      <li>Portal de Dados Abertos de MS — <a href="https://www.dados.ms.gov.br/">https://www.dados.ms.gov.br/</a></li>
+      <li>Despesas por Credor – Mensal (SEFAZ) — <a href="https://www.dados.ms.gov.br/dataset/despesas-por-credor-mensal">https://www.dados.ms.gov.br/dataset/despesas-por-credor-mensal</a></li>
+      <li>Folha de Pagamento (SAD) — <a href="https://www.dados.ms.gov.br/dataset/folha-de-pagamento">https://www.dados.ms.gov.br/dataset/folha-de-pagamento</a></li>
+      <li>Despesas – Anual (SEFAZ) — <a href="https://www.dados.ms.gov.br/dataset/despesas-anual">https://www.dados.ms.gov.br/dataset/despesas-anual</a></li>
+      <li>SICONFI / Tesouro Nacional — API RGF — <a href="https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf">https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf</a></li>
+      <li>Banco Central — SGS série 433 (IPCA/IBGE) — <a href="https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados?formato=json">https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados?formato=json</a></li>
+      <li>AGEPEN-MS — Reajuste geral de 10% sancionado — <a href="https://www.agepen.ms.gov.br/reajuste-geral-de-10-e-sancionado-e-servidores-terao-ganho-salarial-a-partir-de-janeiro-de-2022">agepen.ms.gov.br</a></li>
+      <li>Governo de MS — Pedido de acesso à informação — <a href="https://www.ms.gov.br/comunicacao-e-transparencia/registrar-pedido-de-acesso-a-informacao105/">ms.gov.br</a></li>
+    </ol>
+    <h4 style="margin-top:16px">Fontes secundárias (contexto)</h4>
+    <ol class="refs">
+      <li>Sindifisco-MS — "Com novo reajuste, salário de servidores estaduais já está na conta" — <a href="https://www.sindifisco-ms.org.br/com-novo-reajuste-salario-de-servidores-estaduais-ja-esta-na-conta/">link</a></li>
+      <li>Sindifisco-MS — "Servidores do Estado terão reajuste linear de 10%" — <a href="https://www.sindifisco-ms.org.br/servidores-do-estado-terao-reajuste-linear-de-10/">link</a></li>
+      <li>Sindifisco-MS — "Aposentadoria para servidores públicos estaduais do MS" (LC 274/2020) — <a href="https://www.sindifisco-ms.org.br/aposentadoria-para-servidores-publicos-estaduais-do-ms/">link</a></li>
+      <li>Campo Grande News — "Governo conclui estudos e reajuste dos servidores é previsto para janeiro" — <a href="https://www.campograndenews.com.br/politica/governo-conclui-estudos-e-reajuste-dos-servidores-e-previsto-para-janeiro">link</a></li>
+      <li>Campo Grande News — "Governo propõe alíquotas maiores para diminuir rombo na previdência" — <a href="https://www.campograndenews.com.br/politica/governo-propoe-aliquotas-maiores-para-diminuir-rombo-na-previdencia">link</a></li>
+      <li>Campo Grande News — "Governo está no limite de alerta para despesas com pessoal" — <a href="https://www.campograndenews.com.br/economia/governo-esta-no-limite-de-alerta-para-despesas-com-pessoal">link</a></li>
+      <li>Correio Braziliense — "STF mantém lei que proíbe reajuste para servidores até dezembro" (LC 173/2020) — <a href="https://www.correiobraziliense.com.br/economia/2021/03/amp/4911968-stf-mantem-lei-que-proibe-reajuste-para-servidores-ate-dezembro.html">link</a></li>
+      <li>Brasil 61 — "Remuneração de ministros do STF e PGR será de R$ 46,3 mil em 2025" — <a href="https://brasil61.com/n/remuneracao-de-ministros-do-stf-e-pgr-sera-de-r-46-3-mil-em-2025-mais-de-35-vezes-o-salario-minimo-atual-bras237696">link</a></li>
+      <li>gov.br — Carta de serviço do Portal da Transparência de MS — <a href="https://www.gov.br/en/state-services/servico_estadual?id=21079">link</a></li>
+    </ol>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Pesquisa realizada em 13/10/2026. As conciliações usaram os arquivos disponíveis nessa data; a fonte pode ser revisada pelo Estado. Arquivo: <code>resultados/fontes_primarias.html</code>. Complementa <code>analise_monitoramento.html</code> e <code>guia_publicacao.html</code>, que não foram alterados.
+</div></footer>
+
+<div class="tip" id="tip"></div>
+<script>
+(function(){
+  const root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){const t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function label(){btn.textContent=cur()==='dark'?'☀ Claro':'☾ Escuro'}
+  try{const s=localStorage.getItem('theme');if(s)root.setAttribute('data-theme',s)}catch(e){}
+  label();
+  btn.addEventListener('click',()=>{const n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('theme',n)}catch(e){}label()});
+  document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+    const pre=b.nextElementSibling.cloneNode(true);pre.querySelectorAll('.c').forEach(c=>c.remove());
+    const done=()=>{b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1500)};
+    if(navigator.clipboard)navigator.clipboard.writeText(pre.textContent.replace(/[ \t]+$/gm,'')).then(done,()=>{});
+  }));
+
+  const NS='http://www.w3.org/2000/svg', tip=document.getElementById('tip');
+  const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+  const fmt=(v,d=1)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  function show(ev,h){tip.innerHTML=h;tip.style.opacity=1;let x=ev.pageX+14,y=ev.pageY+14;if(x+tip.offsetWidth>scrollX+innerWidth-8)x=ev.pageX-tip.offsetWidth-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+  function hide(){tip.style.opacity=0}
+  function topRect(g,x,y,w,h,fill){const r=Math.min(4,w/2,h);el('path',{d:`M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`,fill},g)}
+
+  // Chart 1: monthly payroll 2018 & 2022 sample + 13th
+  (function(){
+    const host=document.getElementById('ch-13');host.className='chart';
+    const cats=['dez/2018','13º 2018','dez/2022','13º 2022','nov/2023','dez/2023','dez/2024'];
+    const vals=[421.4,344.7,575.6,479.9,578.5,629.1,748.6];
+    const is13=[0,1,0,1,0,0,0];
+    const W=Math.max(host.clientWidth,320),H=250,m={t:22,r:8,b:30,l:44};
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img'},host);
+    const ymax=800,iw=W-m.l-m.r,ih=H-m.t-m.b,y=v=>m.t+ih-(v/ymax)*ih;
+    [0,200,400,600,800].forEach(t=>{el('line',{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),class:t?'gl':'bl'},svg);el('text',{x:m.l-8,y:y(t)+4,'text-anchor':'end'},svg).textContent=t});
+    const bw=iw/cats.length,barW=Math.min(bw*.6,48);
+    cats.forEach((c,i)=>{const g=el('g',{},svg);const cx=m.l+bw*i+bw/2;
+      topRect(g,cx-barW/2,y(vals[i]),barW,y(0)-y(vals[i]),is13[i]?'var(--s2)':'var(--s1)');
+      el('text',{x:cx,y:y(vals[i])-6,'text-anchor':'middle',class:'lbl'},g).textContent=fmt(vals[i]);
+      el('text',{x:cx,y:H-m.b+16,'text-anchor':'middle'},g).textContent=c;
+      const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+      hit.addEventListener('mousemove',ev=>show(ev,`<div class="h">${c}</div><div class="r"><span>REM. após deduções</span><b>R$ ${fmt(vals[i])} mi</b></div><div class="r"><span>No estudo?</span><b>${is13[i]?'Não':'Sim'}</b></div>`));
+      hit.addEventListener('mouseleave',hide);
+    });
+  })();
+
+  // Chart 2: DTP/RCL with limit lines
+  (function(){
+    const host=document.getElementById('ch-rgf');host.className='chart';
+    const yrs=['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'];
+    const v=[45.83,43.15,48.99,47.22,47.08,41.87,40.62,39.13,44.64,45.20,44.20];
+    const W=Math.max(host.clientWidth,320),H=260,m={t:18,r:96,b:28,l:40};
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img'},host);
+    const ymin=35,ymax=50,iw=W-m.l-m.r,ih=H-m.t-m.b,y=x=>m.t+ih-((x-ymin)/(ymax-ymin))*ih,xs=i=>m.l+iw*(i/(yrs.length-1));
+    [35,40,45,50].forEach(t=>{el('line',{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),class:'gl'},svg);el('text',{x:m.l-8,y:y(t)+4,'text-anchor':'end'},svg).textContent=t+'%'});
+    [[44.1,'alerta 44,1%'],[46.55,'prudencial 46,55%'],[49,'máximo 49%']].forEach(([l,t])=>{el('line',{x1:m.l,x2:W-m.r,y1:y(l),y2:y(l),stroke:'var(--axis)','stroke-dasharray':'4 4','stroke-width':1},svg);el('text',{x:W-m.r+6,y:y(l)+4},svg).textContent=t});
+    el('path',{d:v.map((p,i)=>(i?'L':'M')+xs(i)+','+y(p)).join(''),fill:'none',stroke:'var(--s1)','stroke-width':2},svg);
+    v.forEach((p,i)=>{el('circle',{cx:xs(i),cy:y(p),r:4,fill:'var(--s1)',stroke:'var(--surface)','stroke-width':2},svg);el('text',{x:xs(i),y:H-m.b+16,'text-anchor':'middle'},svg).textContent=yrs[i]});
+    [[2,'49,0%'],[7,'39,1%'],[9,'45,2%']].forEach(([i,t])=>{el('text',{x:xs(i),y:y(v[i])-10,'text-anchor':'middle',class:'lbl'},svg).textContent=t});
+    const cross=el('line',{y1:m.t,y2:H-m.b,stroke:'var(--axis)','stroke-width':1,opacity:0},svg);
+    const hit=el('rect',{x:m.l,y:m.t,width:iw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>{const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*(W/r.width);let i=Math.round((px-m.l)/iw*(yrs.length-1));i=Math.max(0,Math.min(yrs.length-1,i));cross.setAttribute('x1',xs(i));cross.setAttribute('x2',xs(i));cross.setAttribute('opacity',1);
+      const st=v[i]>=49?'acima do máximo':v[i]>=46.55?'acima do prudencial':v[i]>=44.1?'acima do alerta':'abaixo do alerta';
+      show(ev,`<div class="h">${yrs[i]}</div><div class="r"><span>DTP / RCL</span><b>${fmt(v[i],2)}%</b></div><div class="r"><span>Situação</span><b>${st}</b></div>`)});
+    hit.addEventListener('mouseleave',()=>{hide();cross.setAttribute('opacity',0)});
+  })();
+})();
+</script>
+</body>
+</html>

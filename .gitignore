@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Fontes brutas do TSE/IBGE (baixar novamente; links em pesquisas/)
+dados/votacao_secao_2026_MS/*.csv
+dados/votacao_secao_2026_MS.zip
+dados/consulta_cand_2026/
+dados/ibge-mapas-e-dados/MS_Municipios_2025.zip

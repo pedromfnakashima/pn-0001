@@ -37,7 +37,14 @@ CD_TSE_CG = int(corresp.loc[corresp["CD_MUNICIPIO_IBGE"] == CD_IBGE_CG, "CD_MUNI
 
 # --- Locais de votação (TSE) -------------------------------------------------
 loc = pd.read_csv(CSV_LOCAIS, sep=";", encoding="latin1", decimal=",")
-loc = loc[(loc["CD_MUNICIPIO"] == CD_TSE_CG) & (loc["NR_TURNO"] == 1)]
+loc = loc[(loc["CD_MUNICIPIO"] == CD_TSE_CG) & (loc["NR_TURNO"] == 1)].copy()
+# Seção agregada vota na urna da seção principal, que pode estar em outro prédio:
+# seus eleitores passam a contar no local da principal.
+local_secao = loc.set_index(["NR_ZONA", "NR_SECAO"])["NR_LOCAL_VOTACAO"]
+agregada = loc["NR_SECAO_PRINCIPAL"] > 0
+loc.loc[agregada, "NR_LOCAL_VOTACAO"] = local_secao.loc[
+    list(zip(loc.loc[agregada, "NR_ZONA"], loc.loc[agregada, "NR_SECAO_PRINCIPAL"]))].values
+loc = loc.sort_values("NR_SECAO_PRINCIPAL")  # principais (-1) primeiro: nome e coordenada vêm do prédio da urna
 locais = (
     loc.groupby(["NR_ZONA", "NR_LOCAL_VOTACAO"], as_index=False)
     .agg(NM_LOCAL_VOTACAO=("NM_LOCAL_VOTACAO", "first"), DS_ENDERECO=("DS_ENDERECO", "first"),

@@ -7,12 +7,16 @@ Executar (ambiente conda llm_001):
     streamlit run notebooks-e-python/dashboard_dep_estadual_ms_2026.py
 """
 import json
+from html import escape
 from pathlib import Path
 
+import folium
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from branca.colormap import LinearColormap
+from streamlit_folium import st_folium
 
 RAIZ = Path(__file__).resolve().parents[1]
 APP = RAIZ / "dados/app"
@@ -59,6 +63,52 @@ def carregar_cg() -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
     votos = pd.read_csv(CSV_CG_VOTOS)
     malhas = {k: json.loads(p.read_text(encoding="utf-8")) for k, p in GEOJSON_CG.items()}
     return locais, votos, malhas["bairro"], malhas["regiao"]
+
+
+PINO_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="{w}" height="{h}">'
+    '<path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" '
+    'fill="{cor}" stroke="#1f2937" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fff"/></svg>'
+)
+
+
+def mapa_pinos(ag: pd.DataFrame, metrica: str, metrica_lbl: str, contorno: dict) -> folium.Map:
+    """Mapa Folium com um pino por local de votação: cor = métrica, tamanho = votos, popup com link do Google Maps."""
+    # Fundos sem chave de API (os tiles raster da CARTO passaram a exigi-la).
+    m = folium.Map(location=[CENTRO_CG["lat"], CENTRO_CG["lon"]], zoom_start=12, tiles=None)
+    folium.TileLayer("OpenStreetMap", name="Ruas (OpenStreetMap)").add_to(m)
+    folium.TileLayer("Esri.WorldGrayCanvas", name="Cinza claro (Esri)").add_to(m)
+    folium.GeoJson(contorno, name="Regiões (IBGE)",
+                   style_function=lambda _: {"color": "#374151", "weight": 1.5, "fill": False}).add_to(m)
+    folium.LayerControl(collapsed=True).add_to(m)
+    ag = ag.dropna(subset=[metrica])
+    vmin, vmax = float(ag[metrica].min()), float(ag[metrica].max())
+    cmap = LinearColormap(["#c6dbef", "#6baed6", "#2171b5", "#08306b"], vmin=vmin, vmax=max(vmax, vmin + 1e-9),
+                          caption=metrica_lbl)
+    max_votos = max(float(ag["QT_VOTOS"].max()), 1.0)
+    # Desenha do menor para o maior, para que os locais com mais votos fiquem por cima.
+    for i, r in enumerate(ag.sort_values("QT_VOTOS").itertuples()):
+        w = round(11 + 15 * (r.QT_VOTOS / max_votos) ** 0.5)
+        h = round(w * 1.5)
+        url = f"https://www.google.com/maps/search/?api=1&query={r.LAT},{r.LON}"
+        popup = (
+            f"<b>{escape(r.NM_LOCAL)}</b><br>"
+            f"{escape(str(r.NM_BAIRRO_IBGE if pd.notna(r.NM_BAIRRO_IBGE) else '—'))} · "
+            f"{escape(str(r.NM_REGIAO_IBGE))}<br>"
+            f"Votos: <b>{fmt(r.QT_VOTOS)}</b> · {r.PCT_AREA:.2f}% dos válidos<br>"
+            f"{r.PCT_CAND:.1f}% do total em CG · {fmt(r.QT_ELEITORES)} eleitores<br>"
+            f'<a href="{url}" target="_blank" rel="noopener">📍 Abrir no Google Maps</a>'
+        )
+        folium.Marker(
+            [r.LAT, r.LON],
+            icon=folium.DivIcon(html=PINO_SVG.format(w=w, h=h, cor=cmap(getattr(r, metrica))),
+                                icon_size=(w, h), icon_anchor=(w // 2, h)),
+            popup=folium.Popup(popup, max_width=320),
+            tooltip=f"{r.NM_LOCAL} · {fmt(r.QT_VOTOS)} votos",
+            z_index_offset=i,
+        ).add_to(m)
+    cmap.add_to(m)
+    return m
 
 
 votos = carregar_votos()
@@ -170,8 +220,10 @@ with aba_ms:
 # =============================================================================
 # Aba 2 — Campo Grande (locais de votação, bairros e regiões do IBGE)
 # =============================================================================
+NIVEL_PINOS = "Locais de votação – pinos com Google Maps"
 NIVEIS_CG = {
     "Locais de votação": ("NM_LOCAL", None, None),
+    NIVEL_PINOS: ("NM_LOCAL", None, None),
     "Bairros (IBGE)": ("NM_BAIRRO_IBGE", "CD_BAIRRO_IBGE", geo_bairros),
     "Regiões Urbanas / distritos (IBGE)": ("NM_REGIAO_IBGE", "CD_REGIAO_IBGE", geo_regioes),
 }
@@ -215,7 +267,13 @@ with aba_cg:
 
     col_mapa, col_tab = st.columns([3, 2])
     with col_mapa:
-        if col_cod is None:
+        if nivel == NIVEL_PINOS:
+            # returned_objects=[]: o mapa não dispara reexecução do app ao mover/clicar.
+            st_folium(mapa_pinos(ag, metrica, metrica_lbl, geo_regioes), key="mapa_cg_pinos",
+                      height=640, use_container_width=True, returned_objects=[])
+            st.caption(f"Cor do pino: {metrica_lbl} · Tamanho: votos absolutos · Linhas: Regiões (IBGE) · "
+                       "Clique no pino para ver os dados e abrir o local no Google Maps")
+        elif col_cod is None:
             fig = px.scatter_map(
                 ag, lat="LAT", lon="LON", size="QT_VOTOS", color=metrica, size_max=28,
                 color_continuous_scale="Blues", map_style="carto-positron", center=CENTRO_CG, zoom=11,
@@ -224,30 +282,36 @@ with aba_cg:
                 labels=rotulos,
             )
             fig.update_traces(marker=dict(sizemin=3))
+            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=640, coloraxis_colorbar_title_text="",
+                              map_layers=contorno)
+            st.plotly_chart(fig, key="mapa_cg")
+            st.caption(f"Cor: {metrica_lbl} · Tamanho do círculo: votos absolutos · Linhas: Regiões Urbanas (IBGE)")
         else:
             fig = px.choropleth_map(
                 ag, geojson=geo, locations=col_cod, featureidkey=f"properties.{col_cod}", color=metrica,
                 color_continuous_scale="Blues", map_style="carto-positron", center=CENTRO_CG, zoom=10.6,
                 opacity=0.8, hover_name=col_nome, hover_data={**hover, col_cod: False}, labels=rotulos,
             )
-        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=640, coloraxis_colorbar_title_text="",
-                          map_layers=contorno)
-        st.plotly_chart(fig, key="mapa_cg")
-        st.caption(
-            f"Cor: {metrica_lbl}"
-            + (" · Tamanho do círculo: votos absolutos · Linhas: Regiões Urbanas (IBGE)" if col_cod is None else
-               " · Áreas sem cor não têm local de votação (os votos são atribuídos ao local onde o eleitor vota)")
-        )
+            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=640, coloraxis_colorbar_title_text="",
+                              map_layers=contorno)
+            st.plotly_chart(fig, key="mapa_cg")
+            st.caption(f"Cor: {metrica_lbl} · Áreas sem cor não têm local de votação "
+                       "(os votos são atribuídos ao local onde o eleitor vota)")
 
     with col_tab:
-        st.markdown(f"**{nivel} ordenados por votos**")
+        titulo = nivel.split(" (")[0].split(" – ")[0]
+        st.markdown(f"**{titulo} ordenados por votos**")
+        ag_tab = ag.sort_values("QT_VOTOS", ascending=False)
         tab = (
-            ag.sort_values("QT_VOTOS", ascending=False)[[col_nome, "QT_VOTOS", "PCT_AREA", "PCT_CAND", "QT_LOCAIS"]]
-            .rename(columns={col_nome: nivel.split(" (")[0], "QT_VOTOS": "Votos", "PCT_AREA": "% válidos",
+            ag_tab[[col_nome, "QT_VOTOS", "PCT_AREA", "PCT_CAND", "QT_LOCAIS"]]
+            .rename(columns={col_nome: titulo, "QT_VOTOS": "Votos", "PCT_AREA": "% válidos",
                              "PCT_CAND": "% do total CG", "QT_LOCAIS": "Locais"})
         )
         if col_cod is None:
             tab = tab.drop(columns="Locais")
+        if nivel == NIVEL_PINOS:
+            tab["Google Maps"] = ("https://www.google.com/maps/search/?api=1&query="
+                                  + ag_tab["LAT"].astype(str) + "," + ag_tab["LON"].astype(str))
         st.dataframe(
             tab, hide_index=True, height=640, width="stretch",
             column_config={
@@ -255,6 +319,7 @@ with aba_cg:
                 "% válidos": st.column_config.NumberColumn(format="%.2f%%"),
                 "% do total CG": st.column_config.ProgressColumn(
                     format="%.1f%%", min_value=0, max_value=max(float(tab["% do total CG"].max()), 0.01)),
+                "Google Maps": st.column_config.LinkColumn(display_text="📍 abrir"),
             },
         )
 
@@ -313,8 +378,8 @@ IBGE: município (5002704) ─ distrito ─ subdistrito (Região Urbana) ─ bai
 Os votos vêm por **seção**; as coordenadas, por **local de votação**. A chave usada é **zona + seção**, e o local
 é o do cadastro de eleitorado. Motivo: quando um local é substituído (reforma, interdição etc.), o arquivo de
 votação mantém o número do local *original*, enquanto o cadastro de eleitorado traz o local *efetivo* — o
-prédio onde a urna de fato ficou. Seções agregadas (que votam na urna da seção principal) são contadas uma
-única vez, pela seção principal.
+prédio onde a urna de fato ficou. Seções agregadas votam na urna da seção principal — às vezes em outro
+prédio —, então seus eleitores são atribuídos ao local da seção principal.
 
 ### 4. Agregação geográfica em Campo Grande
 

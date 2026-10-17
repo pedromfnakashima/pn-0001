@@ -13,7 +13,7 @@ Para a comparação 2026 − 2022, a votação de 2022 (mesmos candidatos, ident
 em qualquer cargo com votação própria) é redistribuída nos locais de 2026 pela chave
 zona + seção; seções extintas vão para o local de 2026 mais próximo do seu local de 2022.
 
-Rodar depois de preparar_dados_dashboard.py (usa o ranking estadual gerado por ele):
+Rodar depois de preparar_dados_dashboard.py e preparar_dados_ms_2022.py:
     conda activate llm_001
     python notebooks-e-python/preparar_dados_campo_grande.py
 """
@@ -27,10 +27,9 @@ CSV_TSE = RAIZ / "dados/votacao_secao_2026_MS/votacao_secao_2026_MS.csv"
 CSV_LOCAIS = RAIZ / "dados/eleitorado_local_votacao_2026/eleitorado_local_votacao_2026_MS.csv"
 CSV_CORRESP = RAIZ / "dados/ibge-mapas-e-dados/correspondencia_municipios_tse_ibge_MS.csv"
 CSV_VOTOS_MUN = RAIZ / "dados/app/votos_dep_estadual_ms_2026.csv"
-CSV_CAND_2026 = RAIZ / "dados/consulta_cand_2026/consulta_cand_2026_MS.csv"
+CSV_CAND_PARES = RAIZ / "dados/app/candidatos_2022.csv"
 CSV_TSE_2022 = RAIZ / "dados/votacao_secao_2022_MS/votacao_secao_2022_MS.csv"
 CSV_LOCAIS_2022 = RAIZ / "dados/eleitorado_local_votacao_2022/eleitorado_local_votacao_2022_MS.csv"
-CSV_CAND_2022 = RAIZ / "dados/consulta_cand_2022/consulta_cand_2022_MS.csv"
 DIR_IBGE = RAIZ / "dados/ibge-mapas-e-dados/censo_2022_intramunicipal"
 SAIDA = RAIZ / "dados/app"
 
@@ -123,21 +122,8 @@ top = (votos_mun[votos_mun["NR_VOTAVEL"] >= 1000].groupby("NR_VOTAVEL")["QT_VOTO
 votos_top = votos[votos["NR_VOTAVEL"].isin(top)].sort_values(chaves)
 
 # --- Votação de 2022 redistribuída nos locais de 2026 -------------------------
-# Candidatos: o mesmo CPF em 2022 (qualquer cargo com votação própria). O CPF não é gravado.
-cand26 = pd.read_csv(CSV_CAND_2026, sep=";", encoding="latin1", dtype={"NR_CPF_CANDIDATO": str},
-                     usecols=["CD_CARGO", "NR_CANDIDATO", "NR_CPF_CANDIDATO"])
-cand26 = cand26[(cand26["CD_CARGO"] == CD_CARGO_DEP_ESTADUAL) & cand26["NR_CANDIDATO"].isin(top)]
-cand22 = pd.read_csv(CSV_CAND_2022, sep=";", encoding="latin1", dtype={"NR_CPF_CANDIDATO": str},
-                     usecols=["NR_TURNO", "CD_CARGO", "DS_CARGO", "SQ_CANDIDATO", "NR_CANDIDATO",
-                              "NM_URNA_CANDIDATO", "SG_PARTIDO", "NR_CPF_CANDIDATO"])
-cand22 = cand22[(cand22["NR_TURNO"] == 1) & cand22["CD_CARGO"].isin(CARGOS_COM_VOTO_2022)]
-pares = cand26.merge(cand22.drop(columns="NR_TURNO"), on="NR_CPF_CANDIDATO", suffixes=("_2026", "_2022"))
-if pares["NR_CANDIDATO_2026"].duplicated().any():
-    raise SystemExit("Candidato de 2026 com mais de uma candidatura com votos em 2022.")
-pares = pares.drop(columns="NR_CPF_CANDIDATO").rename(columns={
-    "NR_CANDIDATO_2026": "NR_VOTAVEL", "CD_CARGO_2022": "CD_CARGO_2022", "NR_CANDIDATO_2022": "NR_VOTAVEL_2022",
-    "SQ_CANDIDATO": "SQ_CANDIDATO_2022", "DS_CARGO": "DS_CARGO_2022", "NM_URNA_CANDIDATO": "NM_URNA_2022",
-    "SG_PARTIDO": "SG_PARTIDO_2022"}).drop(columns="CD_CARGO_2026")
+# Candidatos de 2026 × candidaturas de 2022 (pelo CPF), gerado por preparar_dados_ms_2022.py.
+pares = pd.read_csv(CSV_CAND_PARES).drop(columns="QT_VOTOS_2022_MS")
 
 cols22 = ["NR_TURNO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_SECAO", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"]
 partes = []

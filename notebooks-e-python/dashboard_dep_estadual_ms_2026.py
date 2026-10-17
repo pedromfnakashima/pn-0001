@@ -23,6 +23,9 @@ APP = RAIZ / "dados/app"
 CSV_VOTOS = APP / "votos_dep_estadual_ms_2026.csv"
 CSV_CG_LOCAIS = APP / "cg_locais_votacao_2026.csv"
 CSV_CG_VOTOS = APP / "cg_votos_top50_por_local_2026.csv"
+CSV_CG_CAND_2022 = APP / "cg_candidatos_2022.csv"
+CSV_CG_VOTOS_2022 = APP / "cg_votos_2022_top50_por_local_2026.csv"
+CSV_CG_VALIDOS_2022 = APP / "cg_validos_2022_por_local_2026.csv"
 GEOJSON_CG = {"bairro": APP / "cg_bairros_ibge_2022.geojson", "regiao": APP / "cg_regioes_ibge_2022.geojson"}
 SHP_IBGE = RAIZ / "dados/ibge-mapas-e-dados/MS_Municipios_2025/MS_Municipios_2025.shp"
 CSV_CORRESP = RAIZ / "dados/ibge-mapas-e-dados/correspondencia_municipios_tse_ibge_MS.csv"
@@ -63,6 +66,12 @@ def carregar_cg() -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
     votos = pd.read_csv(CSV_CG_VOTOS)
     malhas = {k: json.loads(p.read_text(encoding="utf-8")) for k, p in GEOJSON_CG.items()}
     return locais, votos, malhas["bairro"], malhas["regiao"]
+
+
+@st.cache_data(show_spinner="Carregando votação de 2022…")
+def carregar_cg_2022() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Candidatura de 2022 de cada candidato do top 50, votos e válidos de 2022 nos locais de 2026."""
+    return pd.read_csv(CSV_CG_CAND_2022), pd.read_csv(CSV_CG_VOTOS_2022), pd.read_csv(CSV_CG_VALIDOS_2022)
 
 
 PINO_SVG = (
@@ -114,6 +123,7 @@ def mapa_pinos(ag: pd.DataFrame, metrica: str, metrica_lbl: str, contorno: dict)
 votos = carregar_votos()
 geojson, centro = carregar_malha()
 cg_locais, cg_votos, geo_bairros, geo_regioes = carregar_cg()
+cg_cand22, cg_votos22, cg_validos22 = carregar_cg_2022()
 
 validos_mun = (
     votos[~votos["NR_VOTAVEL"].isin(VOTOS_NAO_VALIDOS)]
@@ -221,9 +231,19 @@ with aba_ms:
 # Aba 2 — Campo Grande (locais de votação, bairros e regiões do IBGE)
 # =============================================================================
 NIVEL_PINOS = "Locais de votação – pinos com Google Maps"
+NIVEL_VAR = "Locais de votação – variação 2026 − 2022"
+# Métrica da barra lateral → (coluna de variação, rótulo, formato do hover)
+VARIACOES = {
+    "QT_VOTOS": ("D_VOTOS", "Δ votos (2026 − 2022)", ":+,.0f"),
+    "PCT_AREA": ("D_PCT_AREA", "Δ % dos válidos no local (p.p.)", ":+.2f"),
+    "PCT_CAND": ("D_PCT_CAND", "Δ % da votação do candidato em CG (p.p.)", ":+.2f"),
+}
+ESCALA_DIVERGENTE = ["#67001f", "#b2182b", "#d6604d", "#f4a582", "#e5e5e5",
+                     "#92c5de", "#4393c3", "#2166ac", "#053061"]  # vermelho (queda) → azul (alta)
 NIVEIS_CG = {
     "Locais de votação": ("NM_LOCAL", None, None),
     NIVEL_PINOS: ("NM_LOCAL", None, None),
+    NIVEL_VAR: ("NM_LOCAL", None, None),
     "Bairros (IBGE)": ("NM_BAIRRO_IBGE", "CD_BAIRRO_IBGE", geo_bairros),
     "Regiões Urbanas / distritos (IBGE)": ("NM_REGIAO_IBGE", "CD_REGIAO_IBGE", geo_regioes),
 }
@@ -259,6 +279,35 @@ with aba_cg:
     k4.metric(f"Maior votação ({nivel.split(' ')[0].lower()})", melhor[col_nome],
               f"{fmt(melhor['QT_VOTOS'])} votos", delta_color="off")
 
+    if nivel == NIVEL_VAR:
+        c22 = cg_cand22[cg_cand22["NR_VOTAVEL"] == cand["NR_VOTAVEL"]]
+        chaves_loc = ["NR_ZONA", "NR_LOCAL_VOTACAO"]
+        v22 = cg_votos22[cg_votos22["NR_VOTAVEL"] == cand["NR_VOTAVEL"]][[*chaves_loc, "QT_VOTOS_2022"]]
+        ag = ag.merge(v22, on=chaves_loc, how="left").fillna({"QT_VOTOS_2022": 0})
+        ag["D_VOTOS"] = ag["QT_VOTOS"] - ag["QT_VOTOS_2022"]
+        if c22.empty:
+            st.warning(f"**{cand['NM_URNA']}** não teve votação própria em 2022 (não foi candidato, ou concorreu "
+                       "como vice/suplente): a votação de 2022 é considerada zero e só a variação em votos "
+                       "absolutos está disponível.")
+            ag["D_PCT_AREA"] = ag["D_PCT_CAND"] = float("nan")
+        else:
+            c22 = c22.iloc[0]
+            val22 = cg_validos22[cg_validos22["CD_CARGO_2022"] == c22["CD_CARGO_2022"]][[*chaves_loc, "QT_VALIDOS_2022"]]
+            ag = ag.merge(val22, on=chaves_loc, how="left")
+            ag["PCT_AREA_2022"] = 100 * ag["QT_VOTOS_2022"] / ag["QT_VALIDOS_2022"]
+            ag["PCT_CAND_2022"] = 100 * ag["QT_VOTOS_2022"] / max(c22["QT_VOTOS_2022_CG"], 1)
+            ag["D_PCT_AREA"] = ag["PCT_AREA"] - ag["PCT_AREA_2022"]
+            ag["D_PCT_CAND"] = ag["PCT_CAND"] - ag["PCT_CAND_2022"]
+            delta = votos_cg - c22["QT_VOTOS_2022_CG"]
+            st.info(
+                f"**Em 2022:** {c22['NM_URNA_2022']} concorreu a **{c22['DS_CARGO_2022'].title()}** "
+                f"({c22['SG_PARTIDO_2022']} {c22['NR_VOTAVEL_2022']}) e teve **{fmt(c22['QT_VOTOS_2022_CG'])} votos** "
+                f"em Campo Grande · 2026: {fmt(votos_cg)} · variação: **{'+' if delta >= 0 else ''}{fmt(delta)}**"
+                + ("" if c22["CD_CARGO_2022"] == 7 else
+                   " · Atenção: em 2022 o cargo era outro; o % de válidos de 2022 usa os válidos daquele cargo.")
+            )
+        ag["ABS_D_VOTOS"] = ag["D_VOTOS"].abs()
+
     hover = {"QT_VOTOS": ":,.0f", "PCT_AREA": ":.2f", "PCT_CAND": ":.2f", "QT_ELEITORES": ":,.0f"}
     rotulos = {"QT_VOTOS": "Votos", "PCT_AREA": "% válidos na área", "PCT_CAND": "% do total em CG",
                "QT_ELEITORES": "Eleitores aptos", "NM_BAIRRO_IBGE": "Bairro (IBGE)", "NM_REGIAO_IBGE": "Região (IBGE)"}
@@ -273,6 +322,29 @@ with aba_cg:
                       height=640, use_container_width=True, returned_objects=[])
             st.caption(f"Cor do pino: {metrica_lbl} · Tamanho: votos absolutos · Linhas: Regiões (IBGE) · "
                        "Clique no pino para ver os dados e abrir o local no Google Maps")
+        elif nivel == NIVEL_VAR:
+            dcol, dlbl, dfmt = VARIACOES[metrica]
+            dv = ag.dropna(subset=[dcol])
+            if dv.empty:
+                st.info("Selecione **Votos absolutos** na barra lateral para ver a variação deste candidato.")
+            else:
+                lim = max(float(dv[dcol].abs().max()), 1e-9)
+                fig = px.scatter_map(
+                    dv, lat="LAT", lon="LON", size="ABS_D_VOTOS", color=dcol, size_max=28,
+                    color_continuous_scale=ESCALA_DIVERGENTE, range_color=[-lim, lim],
+                    map_style="carto-positron", center=CENTRO_CG, zoom=11, hover_name=col_nome,
+                    hover_data={"QT_VOTOS": ":,.0f", "QT_VOTOS_2022": ":,.0f", "D_VOTOS": ":+,.0f",
+                                dcol: dfmt, "ABS_D_VOTOS": False, "LAT": False, "LON": False,
+                                "NM_BAIRRO_IBGE": True, "NM_REGIAO_IBGE": True},
+                    labels={**rotulos, "QT_VOTOS": "Votos 2026", "QT_VOTOS_2022": "Votos 2022",
+                            "D_VOTOS": "Δ votos", dcol: dlbl},
+                )
+                fig.update_traces(marker=dict(sizemin=4))
+                fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=640, coloraxis_colorbar_title_text="Δ",
+                                  map_layers=contorno)
+                st.plotly_chart(fig, key="mapa_cg_var")
+                st.caption(f"Cor: {dlbl} (azul = alta, vermelho = queda; quanto mais forte, maior a variação) · "
+                           "Tamanho: |Δ votos| · Linhas: Regiões Urbanas (IBGE)")
         elif col_cod is None:
             fig = px.scatter_map(
                 ag, lat="LAT", lon="LON", size="QT_VOTOS", color=metrica, size_max=28,
@@ -300,28 +372,43 @@ with aba_cg:
 
     with col_tab:
         titulo = nivel.split(" (")[0].split(" – ")[0]
-        st.markdown(f"**{titulo} ordenados por votos**")
-        ag_tab = ag.sort_values("QT_VOTOS", ascending=False)
-        tab = (
-            ag_tab[[col_nome, "QT_VOTOS", "PCT_AREA", "PCT_CAND", "QT_LOCAIS"]]
-            .rename(columns={col_nome: titulo, "QT_VOTOS": "Votos", "PCT_AREA": "% válidos",
-                             "PCT_CAND": "% do total CG", "QT_LOCAIS": "Locais"})
-        )
-        if col_cod is None:
-            tab = tab.drop(columns="Locais")
-        if nivel == NIVEL_PINOS:
-            tab["Google Maps"] = ("https://www.google.com/maps/search/?api=1&query="
-                                  + ag_tab["LAT"].astype(str) + "," + ag_tab["LON"].astype(str))
-        st.dataframe(
-            tab, hide_index=True, height=640, width="stretch",
-            column_config={
-                "Votos": st.column_config.NumberColumn(format="localized"),
-                "% válidos": st.column_config.NumberColumn(format="%.2f%%"),
-                "% do total CG": st.column_config.ProgressColumn(
-                    format="%.1f%%", min_value=0, max_value=max(float(tab["% do total CG"].max()), 0.01)),
-                "Google Maps": st.column_config.LinkColumn(display_text="📍 abrir"),
-            },
-        )
+        if nivel == NIVEL_VAR:
+            dcol, dlbl, _ = VARIACOES[metrica]
+            st.markdown(f"**{titulo} ordenados por {dlbl}**")
+            cols_var = {col_nome: titulo, "QT_VOTOS": "2026", "QT_VOTOS_2022": "2022", "D_VOTOS": "Δ votos"}
+            if dcol != "D_VOTOS":
+                cols_var[dcol] = "Δ p.p."
+            tab = ag.sort_values(dcol, ascending=False, na_position="last")[list(cols_var)].rename(columns=cols_var)
+            st.dataframe(
+                tab, hide_index=True, height=640, width="stretch",
+                column_config={"2026": st.column_config.NumberColumn(format="localized"),
+                               "2022": st.column_config.NumberColumn(format="localized"),
+                               "Δ votos": st.column_config.NumberColumn(format="%+d"),
+                               "Δ p.p.": st.column_config.NumberColumn(format="%+.2f")},
+            )
+        else:
+            st.markdown(f"**{titulo} ordenados por votos**")
+            ag_tab = ag.sort_values("QT_VOTOS", ascending=False)
+            tab = (
+                ag_tab[[col_nome, "QT_VOTOS", "PCT_AREA", "PCT_CAND", "QT_LOCAIS"]]
+                .rename(columns={col_nome: titulo, "QT_VOTOS": "Votos", "PCT_AREA": "% válidos",
+                                 "PCT_CAND": "% do total CG", "QT_LOCAIS": "Locais"})
+            )
+            if col_cod is None:
+                tab = tab.drop(columns="Locais")
+            if nivel == NIVEL_PINOS:
+                tab["Google Maps"] = ("https://www.google.com/maps/search/?api=1&query="
+                                      + ag_tab["LAT"].astype(str) + "," + ag_tab["LON"].astype(str))
+            st.dataframe(
+                tab, hide_index=True, height=640, width="stretch",
+                column_config={
+                    "Votos": st.column_config.NumberColumn(format="localized"),
+                    "% válidos": st.column_config.NumberColumn(format="%.2f%%"),
+                    "% do total CG": st.column_config.ProgressColumn(
+                        format="%.1f%%", min_value=0, max_value=max(float(tab["% do total CG"].max()), 0.01)),
+                    "Google Maps": st.column_config.LinkColumn(display_text="📍 abrir"),
+                },
+            )
 
     with st.expander("Votos do candidato por zona eleitoral (Campo Grande)"):
         zonas = cl.groupby("NR_ZONA", as_index=False).agg(
@@ -349,6 +436,7 @@ with aba_met:
 | Votação por seção eleitoral 2026 – MS (`votacao_secao_2026_MS`) | TSE | Votos por votável em cada seção (1º turno, cargo Deputado Estadual) |
 | Candidatos 2026 – MS (`consulta_cand_2026_MS`) | TSE | Nome de urna e partido |
 | Eleitorado por local de votação 2026 (`eleitorado_local_votacao_2026_MS`) | TSE | Local de votação de cada seção, endereço, **latitude/longitude** e eleitores aptos |
+| Votação por seção, eleitorado por local de votação e candidatos 2022 – MS | TSE | Comparação 2026 − 2022 em Campo Grande |
 | Códigos oficiais de UF e municípios segundo o TSE e o IBGE (`municipio_tse_ibge`) | TSE | Correspondência entre códigos municipais |
 | Malha Municipal 2025 – MS | IBGE | Mapa por município |
 | Malhas intramunicipais do Censo 2022 – MS (setores, bairros, subdistritos) | IBGE | Mapa de Campo Grande |
@@ -395,7 +483,22 @@ prédio —, então seus eleitores são atribuídos ao local da seção principa
 Situação atual: **{n_loc} locais de votação**, **{fmt(n_sec)} seções**, **{fmt(n_ele)} eleitores aptos**;
 {n_loc - n_sem_bairro} locais dentro de um bairro do IBGE e {n_sem_bairro} na zona rural ou em distritos (sem bairro).
 
-### 5. Limitações
+### 5. Comparação 2026 − 2022 por local de votação
+
+- **Mesmo candidato:** cada um dos 50 mais votados de 2026 é procurado nas candidaturas de 2022 pelo CPF
+  (cadastro de candidatos do TSE; o CPF não é gravado nos dados do dashboard). Vale qualquer cargo com votação
+  própria em 2022 (deputado estadual, deputado federal, senador ou governador, 1º turno). Quem não foi
+  candidato em 2022, ou foi apenas vice/suplente, tem votação de 2022 igual a zero.
+- **Mesmo eleitorado:** os locais de votação mudam entre eleições (números e prédios), mas o eleitor costuma
+  continuar na mesma seção. Por isso cada seção de 2022 é levada ao local onde a **mesma seção (zona + seção)**
+  votou em 2026 — mais de 99,5% dos votos de 2022 em Campo Grande são ligados assim. Seções de 2022 extintas
+  em 2026 vão para o local de 2026 mais próximo do seu local de 2022 (menos de 500 m).
+- **Métricas:** votos absolutos → Δ votos; % dos válidos → Δ em pontos percentuais, com os válidos de 2022 do
+  cargo disputado naquele ano; % da votação do candidato em CG → Δ em pontos percentuais da distribuição.
+- **Cores:** azul = alta, vermelho = queda, cinza = estável; a escala é simétrica em torno de zero, e tons mais
+  fortes indicam variações maiores. O tamanho do círculo é proporcional à variação absoluta em votos.
+
+### 6. Limitações
 
 - **Local de votação ≠ residência.** O mapa mostra onde o eleitor vota, não onde mora. Em geral se vota perto
   de casa, mas há exceções (mudanças de endereço sem transferência do título, por exemplo).
@@ -406,13 +509,16 @@ Situação atual: **{n_loc} locais de votação**, **{fmt(n_sec)} seções**, **
   levemente do desenho da Prefeitura.
 - Coordenadas são informadas pelos cartórios eleitorais e podem conter imprecisões pontuais.
 
-### 6. Reprodução
+- Na comparação com 2022, candidatos que mudaram de cargo (ex.: de deputado federal para estadual) disputaram
+  eleitorados e concorrências diferentes; a variação deve ser lida com esse cuidado.
+
+### 7. Reprodução
 
 ```bash
 conda activate llm_001
 python notebooks-e-python/gerar_correspondencia_tse_ibge_ms.py   # tabela TSE × IBGE (verificada)
 python notebooks-e-python/preparar_dados_dashboard.py            # votos por município
-python notebooks-e-python/preparar_dados_campo_grande.py         # locais, votos por local e malhas de CG
+python notebooks-e-python/preparar_dados_campo_grande.py         # locais, votos 2026 e 2022 por local, malhas de CG
 ```
 Os arquivos brutos (centenas de MB) não são versionados; o dashboard usa apenas os arquivos reduzidos em
 `dados/app/` (< 1,5 MB no total).

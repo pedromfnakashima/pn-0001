@@ -9,6 +9,10 @@ Cada local de votação (ponto) é atribuído ao setor censitário, bairro e sub
 (= Região Urbana) do IBGE que o contém (junção espacial ponto-em-polígono). Os votos são
 somados por local de votação; as agregações por bairro/região são feitas no dashboard.
 
+Para a comparação 2026 − 2022, a votação de 2022 (mesmos candidatos, identificados pelo CPF,
+em qualquer cargo com votação própria) é redistribuída nos locais de 2026 pela chave
+zona + seção; seções extintas vão para o local de 2026 mais próximo do seu local de 2022.
+
 Rodar depois de preparar_dados_dashboard.py (usa o ranking estadual gerado por ele):
     conda activate llm_001
     python notebooks-e-python/preparar_dados_campo_grande.py
@@ -23,11 +27,16 @@ CSV_TSE = RAIZ / "dados/votacao_secao_2026_MS/votacao_secao_2026_MS.csv"
 CSV_LOCAIS = RAIZ / "dados/eleitorado_local_votacao_2026/eleitorado_local_votacao_2026_MS.csv"
 CSV_CORRESP = RAIZ / "dados/ibge-mapas-e-dados/correspondencia_municipios_tse_ibge_MS.csv"
 CSV_VOTOS_MUN = RAIZ / "dados/app/votos_dep_estadual_ms_2026.csv"
+CSV_CAND_2026 = RAIZ / "dados/consulta_cand_2026/consulta_cand_2026_MS.csv"
+CSV_TSE_2022 = RAIZ / "dados/votacao_secao_2022_MS/votacao_secao_2022_MS.csv"
+CSV_LOCAIS_2022 = RAIZ / "dados/eleitorado_local_votacao_2022/eleitorado_local_votacao_2022_MS.csv"
+CSV_CAND_2022 = RAIZ / "dados/consulta_cand_2022/consulta_cand_2022_MS.csv"
 DIR_IBGE = RAIZ / "dados/ibge-mapas-e-dados/censo_2022_intramunicipal"
 SAIDA = RAIZ / "dados/app"
 
 CD_IBGE_CG = "5002704"
 CD_CARGO_DEP_ESTADUAL = 7
+CARGOS_COM_VOTO_2022 = {3, 5, 6, 7}  # governador, senador, dep. federal, dep. estadual
 VOTOS_NAO_VALIDOS = {95, 96}  # branco, nulo
 TOP_N = 50
 TOLERANCIA_SIMPLIFICACAO_M = 15
@@ -113,6 +122,71 @@ top = (votos_mun[votos_mun["NR_VOTAVEL"] >= 1000].groupby("NR_VOTAVEL")["QT_VOTO
        .nlargest(TOP_N).index)
 votos_top = votos[votos["NR_VOTAVEL"].isin(top)].sort_values(chaves)
 
+# --- Votação de 2022 redistribuída nos locais de 2026 -------------------------
+# Candidatos: o mesmo CPF em 2022 (qualquer cargo com votação própria). O CPF não é gravado.
+cand26 = pd.read_csv(CSV_CAND_2026, sep=";", encoding="latin1", dtype={"NR_CPF_CANDIDATO": str},
+                     usecols=["CD_CARGO", "NR_CANDIDATO", "NR_CPF_CANDIDATO"])
+cand26 = cand26[(cand26["CD_CARGO"] == CD_CARGO_DEP_ESTADUAL) & cand26["NR_CANDIDATO"].isin(top)]
+cand22 = pd.read_csv(CSV_CAND_2022, sep=";", encoding="latin1", dtype={"NR_CPF_CANDIDATO": str},
+                     usecols=["NR_TURNO", "CD_CARGO", "DS_CARGO", "SQ_CANDIDATO", "NR_CANDIDATO",
+                              "NM_URNA_CANDIDATO", "SG_PARTIDO", "NR_CPF_CANDIDATO"])
+cand22 = cand22[(cand22["NR_TURNO"] == 1) & cand22["CD_CARGO"].isin(CARGOS_COM_VOTO_2022)]
+pares = cand26.merge(cand22.drop(columns="NR_TURNO"), on="NR_CPF_CANDIDATO", suffixes=("_2026", "_2022"))
+if pares["NR_CANDIDATO_2026"].duplicated().any():
+    raise SystemExit("Candidato de 2026 com mais de uma candidatura com votos em 2022.")
+pares = pares.drop(columns="NR_CPF_CANDIDATO").rename(columns={
+    "NR_CANDIDATO_2026": "NR_VOTAVEL", "CD_CARGO_2022": "CD_CARGO_2022", "NR_CANDIDATO_2022": "NR_VOTAVEL_2022",
+    "SQ_CANDIDATO": "SQ_CANDIDATO_2022", "DS_CARGO": "DS_CARGO_2022", "NM_URNA_CANDIDATO": "NM_URNA_2022",
+    "SG_PARTIDO": "SG_PARTIDO_2022"}).drop(columns="CD_CARGO_2026")
+
+cols22 = ["NR_TURNO", "CD_CARGO", "CD_MUNICIPIO", "NR_ZONA", "NR_SECAO", "NR_LOCAL_VOTACAO", "NR_VOTAVEL", "QT_VOTOS"]
+partes = []
+for chunk in pd.read_csv(CSV_TSE_2022, sep=";", encoding="latin1", usecols=cols22, chunksize=500_000):
+    chunk = chunk[(chunk["NR_TURNO"] == 1) & (chunk["CD_MUNICIPIO"] == CD_TSE_CG)
+                  & chunk["CD_CARGO"].isin(CARGOS_COM_VOTO_2022)]
+    partes.append(chunk.drop(columns=["NR_TURNO", "CD_MUNICIPIO"]))
+v22 = pd.concat(partes)
+
+# Chave principal: zona + seção. O eleitor costuma permanecer na mesma seção entre eleições,
+# então os votos de 2022 seguem o eleitorado até o local onde ele vota em 2026.
+v22 = v22.merge(loc[["NR_ZONA", "NR_SECAO", "NR_LOCAL_VOTACAO"]].rename(columns={"NR_LOCAL_VOTACAO": "LOCAL_2026"}),
+                on=["NR_ZONA", "NR_SECAO"], how="left")
+# Seções extintas: local de 2026 mais próximo do local de votação de 2022.
+sem_par = v22.loc[v22["LOCAL_2026"].isna(), ["NR_ZONA", "NR_LOCAL_VOTACAO"]].drop_duplicates()
+if not sem_par.empty:
+    l22 = pd.read_csv(CSV_LOCAIS_2022, sep=";", encoding="latin1", decimal=",",
+                      usecols=["NR_TURNO", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_LATITUDE", "NR_LONGITUDE"])
+    l22 = (l22[(l22["CD_MUNICIPIO"] == CD_TSE_CG) & (l22["NR_TURNO"] == 1)]
+           .drop_duplicates(["NR_ZONA", "NR_LOCAL_VOTACAO"]).merge(sem_par))
+    p22 = gpd.GeoDataFrame(l22, geometry=gpd.points_from_xy(l22["NR_LONGITUDE"], l22["NR_LATITUDE"]), crs=4326)
+    p26 = gpd.GeoDataFrame(locais[["NR_LOCAL_VOTACAO", "NR_ZONA"]].rename(
+        columns={"NR_LOCAL_VOTACAO": "LOCAL_PROX", "NR_ZONA": "ZONA_PROX"}),
+        geometry=gpd.points_from_xy(locais["LON"], locais["LAT"]), crs=4326)
+    prox = gpd.sjoin_nearest(p22.to_crs(5880), p26.to_crs(5880), distance_col="DIST_M")
+    prox = prox.drop_duplicates(["NR_ZONA", "NR_LOCAL_VOTACAO"])
+    v22 = v22.merge(prox[["NR_ZONA", "NR_LOCAL_VOTACAO", "ZONA_PROX", "LOCAL_PROX"]], how="left")
+    usa_prox = v22["LOCAL_2026"].isna()
+    v22.loc[usa_prox, "LOCAL_2026"] = v22.loc[usa_prox, "LOCAL_PROX"]
+    v22.loc[usa_prox, "NR_ZONA"] = v22.loc[usa_prox, "ZONA_PROX"]
+    print(f"2022: {usa_prox.mean():.2%} das linhas de votação (seções extintas) atribuídas ao local de 2026 "
+          f"mais próximo (até {prox['DIST_M'].max():.0f} m)")
+if v22["LOCAL_2026"].isna().any():
+    raise SystemExit("Votos de 2022 sem local de 2026 correspondente.")
+v22 = v22.astype({"LOCAL_2026": int, "NR_ZONA": int})
+chaves22 = ["NR_ZONA", "LOCAL_2026"]
+
+validos22 = (v22[~v22["NR_VOTAVEL"].isin(VOTOS_NAO_VALIDOS)]
+             .groupby([*chaves22, "CD_CARGO"], as_index=False)["QT_VOTOS"].sum()
+             .rename(columns={"LOCAL_2026": "NR_LOCAL_VOTACAO", "CD_CARGO": "CD_CARGO_2022",
+                              "QT_VOTOS": "QT_VALIDOS_2022"}))
+votos22 = (v22.merge(pares[["NR_VOTAVEL", "CD_CARGO_2022", "NR_VOTAVEL_2022"]],
+                     left_on=["CD_CARGO", "NR_VOTAVEL"], right_on=["CD_CARGO_2022", "NR_VOTAVEL_2022"],
+                     suffixes=("_X", ""))
+           .groupby([*chaves22, "NR_VOTAVEL"], as_index=False)["QT_VOTOS"].sum()
+           .rename(columns={"LOCAL_2026": "NR_LOCAL_VOTACAO", "QT_VOTOS": "QT_VOTOS_2022"}))
+pares = pares.merge(votos22.groupby("NR_VOTAVEL")["QT_VOTOS_2022"].sum().rename("QT_VOTOS_2022_CG"),
+                    on="NR_VOTAVEL", how="left").fillna({"QT_VOTOS_2022_CG": 0})
+
 # --- Malhas simplificadas para o mapa -----------------------------------------
 def simplificar(g: gpd.GeoDataFrame, cols: list[str]) -> gpd.GeoDataFrame:
     g = g[cols + ["geometry"]].copy()
@@ -124,6 +198,9 @@ SAIDA.mkdir(parents=True, exist_ok=True)
 arquivos = {
     "cg_locais_votacao_2026.csv": locais,
     "cg_votos_top50_por_local_2026.csv": votos_top,
+    "cg_candidatos_2022.csv": pares,
+    "cg_votos_2022_top50_por_local_2026.csv": votos22,
+    "cg_validos_2022_por_local_2026.csv": validos22,
 }
 for nome, df in arquivos.items():
     df.to_csv(SAIDA / nome, index=False, encoding="utf-8")

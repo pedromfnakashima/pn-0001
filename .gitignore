@@ -229,3 +229,7 @@ dados/eleitorado_local_votacao_2026/*.zip
 dados/tse_ibge_municipios/*.csv
 dados/tse_ibge_municipios/*.zip
 dados/ibge-mapas-e-dados/censo_2022_intramunicipal/
+dados/votacao_secao_2022_MS/*.csv
+dados/votacao_secao_2022_MS.zip
+dados/consulta_cand_2022/
+dados/eleitorado_local_votacao_2022/*.csv
